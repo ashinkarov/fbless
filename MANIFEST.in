@@ -1,0 +1,1 @@
+include fbless fbless_lib/*.py fbless_lib/hyph_dicts/* README MANIFEST.in MANIFEST
