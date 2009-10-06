@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- mode: python; coding: koi8-r; -*-
+# -*- mode: python; coding: utf-8; -*-
 #
 
 import sys, os
