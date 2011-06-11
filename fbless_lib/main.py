@@ -684,8 +684,8 @@ class MainWindow:
             elif ch in options.keys['goto-end']:
                 self.goto_end()
 
-##             elif ch in options.keys['edit-xml']:
-##                 self.edit_xml()
+            elif ch in options.keys['edit-xml']:
+                self.edit_xml()
 
 ##             elif ch in (curses.KEY_MOUSE,):
 ##                 print 'mouse:', curses.getmouse()

@@ -25,7 +25,7 @@ use_default_colors = True               # use default terminal colors
 
 replace_chars = False #True
 
-editor = 'vim -c go%s %s'               # first %s - byte index
+editor = 'vim -c go%s "%s"'             # first %s - byte index
                                         # second %s - file name
 
 auto_scroll_interval = 3                # interval for autoscroll in sec
