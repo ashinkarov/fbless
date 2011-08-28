@@ -255,47 +255,21 @@ class MainWindow:
 
         self.link_pos = links
 
-    def get_str(self, validator):
-        #curses.echo()
-        #self.screen.nodelay(0)
-        s = ''
-        while True:
-            ch = self.screen.getch()
-            if ch in (curses.KEY_ENTER, ascii.NL):
-                break
-            #elif ch in (curses.KEY_ENTER, ord('\n')):
-            #    return ''
-            elif ch in (curses.KEY_BACKSPACE, curses.KEY_LEFT,
-                        ascii.DEL, ascii.BS):
-                if not s: break
-                y, x = curses.getsyx()
-                self.screen.move(y, x-1)
-                self.screen.delch()
-                s = s[:-1]
-            elif validator(ch):
-                self.screen.addstr(chr(ch))
-                s += chr(ch)
-        return s
-
     def search(self):
-        self.update_status = True
+        search_msg = 'Search pattern: '
+	self.update_status = True
         self.screen.move(curses.LINES-1, 0)
         self.screen.clrtoeol()
-        self.screen.addstr('Search pattern: ')
+        self.screen.addstr(search_msg)
         self.screen.nodelay(0)
-        def validator(ch):
-            # FIXME
-            #print '>', ch
-            #return True
-            return 0 <= ch < 256
-##             try:
-##                 uch = unicode(ch, default_charset)
-##             except Exception, ex:
-##                 #print '--', ex
-##                 return False
-##             return True
-        s = self.get_str(validator)
-        s = unicode(s, default_charset)
+	
+	curses.echo ()
+	s = self.screen.getstr ()
+	curses.noecho ()
+        
+	# Ignore the erors happening when deleating the
+	# utf8 charactes.
+	s = unicode(s, default_charset, errors='ignore')
         self.screen.nodelay(1)
         #print 'search:', s.encode(default_charset)
         if not s:
@@ -326,32 +300,34 @@ class MainWindow:
         self.redraw_scr()
 
     def goto_percent(self):
-        # FIXME
         self.screen.move(curses.LINES-1, 0)
         self.screen.clrtoeol()
         self.screen.addstr('Go(%): ')
         self.screen.nodelay(0)
-        #curses.echo()
-        #s = self.screen.getstr()
-        def validator(ch):
-            return ch < 256 and chr(ch) in '0123456789'
-        s = self.get_str(validator)
-        #print 'str:', s
-        #self.screen.nodelay(1)
-        #curses.noecho()
+        
+	curses.echo()
+        s = self.screen.getstr()
+        curses.noecho()
+
+	# Ignore the erors happening when deleating the
+	# utf8 charactes.
+	s = unicode (s, default_charset, errors='ignore')
+	s = s.encode (default_charset)
         self.update_status = True
         try:
             pos = float(s)
         except:
+	    self.redraw_scr()
             return
         if pos < 0 or pos > 100:
-            return
+	    self.redraw_scr()
+	    return
 
         if 1: #pos:
             self.par_index, self.line_index = self.content.get_position(pos)
-            self.redraw_scr()
-        #curses.noecho()
-        #self.screen.nodelay(1)
+        
+	self.redraw_scr()
+        self.screen.nodelay(1)
 
     def goto_link(self):
         if self.link_pos:

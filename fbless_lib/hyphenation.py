@@ -13,9 +13,9 @@ else:
     dict_files_dir = os.path.join('fbless_lib', 'hyph_dicts')
 ru_dict_file = os.path.join(dict_files_dir, 'hyph_ru.dic')
 
-vowels = unicode('аеёиоуыэюяАЕЁИОУЫЭЮЯ')
-consonants = unicode('бвгджзйклмнпрстфхцчшщБВГДЖЗЙКЛМНПРСТФХЦЧШЩ')
-hardsoftsigns = unicode('ъьЪЬ')
+vowels = unicode('аеёиоуыэюяАЕЁИОУЫЭЮЯ', 'utf8')
+consonants = unicode('бвгджзйклмнпрстфхцчшщБВГДЖЗЙКЛМНПРСТФХЦЧШЩ', 'utf8')
+hardsoftsigns = unicode('ъьЪЬ', 'utf8')
 
 class Hyphenation:
 
