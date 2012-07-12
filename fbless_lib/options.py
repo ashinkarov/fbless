@@ -16,6 +16,10 @@ rc_file = '~/.fbless_save'
 context_lines = 0
 status = True
 
+# screen size (columns x lines) . Set 0/None/False for auto detect
+columns=False #120
+lines=False #40
+
 use_default_colors = True               # use default terminal colors
 
 replace_chars = False #True
@@ -23,12 +27,15 @@ replace_chars = False #True
 editor = 'vim -c go%s %s'               # first %s - byte index
                                         # second %s - file name
 
+auto_scroll_interval = 3                # interval for autoscroll in sec
+
 options = {
     'default':     {'justify'           : 'fill',
                     'hyphenate'         : True,
                     'left_indent'       : 2,
                     'right_indent'      : 2,
                     'first_line_indent' : 4,
+                    'bold'              : True,
                     'foreground'        : curses.COLOR_WHITE,
                     'background'        : curses.COLOR_BLACK,
                   },
@@ -37,6 +44,7 @@ options = {
                     'left_indent'       : 2,
                     'right_indent'      : 2,
                     'first_line_indent' : 4,
+                    'bold'              : True,
                     'foreground'        : None,
                     'background'        : None,
                   },
@@ -47,6 +55,7 @@ options = {
                     'first_line_indent' : 0,
                     'foreground'        : None,
                     'background'        : None,
+                    'bold'              : True,
                     },
     'text-author': {'justify'           : 'right',
                     'hyphenate'         : True,
@@ -77,6 +86,7 @@ options = {
                     'left_indent'       : 8,
                     'right_indent'      : 8,
                     'first_line_indent' : 0,
+                    'bold'              : False,
                     'foreground'        : curses.COLOR_MAGENTA,
                     'background'        : None,
                     },
@@ -114,10 +124,14 @@ options = {
 keys = {
     'quit'          : (ord('q'), ord('Q')),
     'toggle-status' : (ord('s'),),
-    'search'        : (ord('f'), ord('/'),),
+    'search'        : (ord('/'),),
+    'scroll-fifo'   : (ord('f'),),
+    'auto-scroll'   : (ord('a'),),
     'search-next'   : (ord('n'),),
+    'timer-inc'     : (ord('+'),),
+    'timer-dec'     : (ord('-'),),
     'goto-percent'  : (ord('5'), ord('G')),
-    'jump-link'     : (ord('\t'), ord('j')),
+    'jump-link'     : (ord('\t'),),
     'goto-link'     : (curses.KEY_ENTER, ord('\n'), curses.KEY_RIGHT),
     'backward'      : (curses.KEY_LEFT,ord('h')),
     'foreward'      : (curses.KEY_BACKSPACE, ord('l'),),

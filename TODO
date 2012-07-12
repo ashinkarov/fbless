@@ -1,0 +1,7 @@
+
+- BUG: test search in utf ( use try in s = utf ()
+* Command line options
+* Change text and bg color
+* colorscheme
+* ~/.fbless_rc file with options
+
