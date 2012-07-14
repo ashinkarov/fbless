@@ -6,7 +6,7 @@ import os
 from distutils.core import setup
 from distutils.command.install_data import install_data
 
-program_version = '0.2.2a'
+program_version = '0.2.2'
 
 class my_install_data(install_data):
     # for install data files to library dir
