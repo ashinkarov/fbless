@@ -1,0 +1,9 @@
+
+Add by Alex.P.Burlutsky (107@mail.ru):
+
+2009-12-10	*	fix some bugs
+2009-12-10	+	change auto scrool speed (+, -)
+2009-12-10	+	set screen size in options (columns, lines)
+2009-12-10	+	auto scroll (a) for all scroll modes (f, Down, PgDown, Up, PgUp)
+2009-12-09	+	'bold' option in text styles
+2009-12-09	+	fifo scroll (f)

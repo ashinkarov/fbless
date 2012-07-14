@@ -16,7 +16,7 @@ import curses.ascii as ascii
 from fb2parser import fb2parse
 from paragraph import attr
 import options
-
+import const
 
 default_charset = locale.getdefaultlocale()[1]
 
@@ -65,6 +65,11 @@ class MainWindow:
 
         #~curses.mousemask(curses.ALL_MOUSE_EVENTS)
 
+        self.auto_scroll_type = None                                 # auto scroll type not selected. TODO: load status from rc_file 
+        self.auto_scroll_enable = False                              # disable auto scroll at startup
+        signal.signal(signal.SIGALRM, self.alarm_handler)            # alarm as timer for auto scroll
+        self.c_fifo_scroll_line = 0                                  # counter for fifo auto scroll
+
         self.link_pos = [] # for <a> elements; list of tuples (y, x, link_name)
         self.cur_link = 0         # current cursor position; index of link_pos
         self.content = create_content(self.filename, curses.COLS)
@@ -77,6 +82,19 @@ class MainWindow:
         screen.nodelay(1)
         screen.scrollok(True)
         #screen.idlok(True)
+        # set screen size from config
+        if options.lines:
+            if options.lines > curses.LINES or options.lines < const.MIN_LINES:
+                raise NameError, "ERROR: Can't set screen size with " + str(options.lines) + " lines. Posible range: " + str(const.MIN_LINES) + "-" + str(curses.LINES) + ". See options"
+                return -1
+            curses.LINES=options.lines
+        if options.columns:
+            if options.columns > curses.COLS or options.columns < const.MIN_COLUMNS:
+                raise NameError, "ERROR: Can't set screen size with " + str(options.columns) + " columns from options. Posible range: " + str(const.MIN_COLUMNS) + "-" + str(curses.COLS) + ". See options"
+                return -1
+            curses.COLS=options.columns
+        #
+        
 
     def load_positions(self):
         positions = []
@@ -168,6 +186,10 @@ class MainWindow:
                 a = curses.A_REVERSE
             else:
                 a = curses.A_NORMAL
+
+            if ('bold' in opt) and (opt['bold'] == True):
+                a |= curses.A_BOLD
+
             if cur_attr == attr.left_spaces:
                 self.screen.addstr(s, a)
             elif cur_attr is not None:
@@ -210,7 +232,7 @@ class MainWindow:
             self.screen.clrtoeol()
             n = curses.LINES - 1
             try:
-                s, type = self.content.get(self.par_index, self.line_index+n)
+                s, type = self.content.get(self.par_index, self.line_index+n-self.c_fifo_scroll_line)
             except IndexError:
                 # EOF
                 pass
@@ -254,6 +276,28 @@ class MainWindow:
             self.cur_link = 0
 
         self.link_pos = links
+
+    def get_str(self, validator):
+        #curses.echo()
+        #self.screen.nodelay(0)
+        s = ''
+        while True:
+            ch = self.screen.getch()
+            if ch in (curses.KEY_ENTER, ascii.NL):
+                break
+            #elif ch in (curses.KEY_ENTER, ord('\n')):
+            #    return ''
+            elif ch in (curses.KEY_BACKSPACE, curses.KEY_LEFT,
+                        ascii.DEL, ascii.BS):
+                if not s: break
+                y, x = curses.getsyx()
+                self.screen.move(y, x-1)
+                self.screen.delch()
+                s = s[:-1]
+            elif validator(ch):
+                self.screen.addstr(chr(ch))
+                s += chr(ch)
+        return s
 
     def search(self):
         search_msg = 'Search pattern: '
@@ -374,10 +418,26 @@ class MainWindow:
         self.screen.move(*pos[:2])
 
     def scroll_up(self):
+        # set scroll type for auto scroll
+        self.auto_scroll_type = const.SCROLL_UP
+        # redraw after auto scroll 
+        if self.c_fifo_scroll_line > 0:
+            self.line_index -= self.c_fifo_scroll_line
+            self.redraw_scr()
+            self.c_fifo_scroll_line = 0
+
         if self.par_index == 0 and self.line_index == 0:
             return
         self.update_status = True
         self.screen.scroll(-1)
+        # clear last string if it posible
+        # (for ex. when options.lines < curses.LINES)
+        try:
+            self.screen.move(curses.LINES, 0)
+            self.screen.clrtoeol()
+        except:
+            pass
+
         self.line_index -= 1
 
         self.update_links_pos(-1)
@@ -388,14 +448,22 @@ class MainWindow:
         self.par_index, self.line_index = self.content.indexes()
 
     def scroll_down(self):
+        # set scroll type for auto scroll
+        self.auto_scroll_type = const.SCROLL_DOWN
+        # redraw after auto scroll 
+        if self.c_fifo_scroll_line > 0:
+            self.line_index -= self.c_fifo_scroll_line
+            self.redraw_scr()
+            self.c_fifo_scroll_line = 0
+
         n = curses.LINES - options.status
         try:
             s, type = self.content.get(self.par_index, self.line_index+n)
         except IndexError:
             # EOF
             return
-        self.update_status = True
-
+     
+        self.toggle_status(options.status)
         self.update_links_pos(1)
 
         self.screen.scroll(1)
@@ -407,7 +475,64 @@ class MainWindow:
         self.par_index, self.line_index = self.content.indexes(
             self.par_index, self.line_index)
 
+    def alarm_handler( self, signum, frame ):
+        """Execute functions by alarm as timer"""
+        # get scroll_type and exec it function
+        if self.auto_scroll_type:
+                func=getattr(self,self.auto_scroll_type)
+                func()
+        signal.alarm(options.auto_scroll_interval)
+
+
+    def scroll_fifo(self):
+        """ FIFO type auto scroll 
+
+            Autoscroll by replacing already readed lines"""
+
+        # set scroll type for auto scroll
+        self.auto_scroll_type = const.SCROLL_FIFO
+        n = curses.LINES - options.status
+        try:
+            s, type = self.content.get(self.par_index, self.line_index+n)
+        except IndexError:
+            # EOF
+            return
+        self.update_status = True
+        self.update_links_pos(1)
+
+        # rotate fifo
+        if self.c_fifo_scroll_line >= n:
+            # go back to top of screen
+            self.c_fifo_scroll_line = 0
+        # erase previous pointer (*)
+        if self.c_fifo_scroll_line > 0:
+            self.screen.move(self.c_fifo_scroll_line-1, 0)
+            self.screen.addch(" ")
+        else:
+            self.screen.move(n-1, 0)
+            self.screen.addch(" ")
+        # draw current string
+        self.screen.move(self.c_fifo_scroll_line, 0)
+        self.screen.clrtoeol()
+        self.add_str(s, type)
+        # draw pointer to current string
+        self.screen.move(self.c_fifo_scroll_line, 0)
+        self.screen.addch("*")
+        # erase next line
+        if self.c_fifo_scroll_line+1 < curses.LINES-options.status:
+            self.screen.move(self.c_fifo_scroll_line+1, 0)
+            self.screen.clrtoeol()
+        
+        self.c_fifo_scroll_line += 1       
+        self.line_index += 1
+
+        self.par_index, self.line_index = self.content.indexes(
+            self.par_index, self.line_index)
+
+
     def next_page(self):
+        # set scroll type for auto scroll
+        self.auto_scroll_type = const.NEXT_PAGE
         n = curses.LINES - options.context_lines - options.status
         try:
             s, type = self.content.get(self.par_index, self.line_index+n)
@@ -421,6 +546,8 @@ class MainWindow:
             self.par_index, self.line_index)
 
     def prev_page(self):
+        # set scroll type for auto scroll
+        self.auto_scroll_type = const.PREV_PAGE
         if self.par_index == 0 and self.line_index == 0:
             return
         self.update_status = True
@@ -468,7 +595,10 @@ class MainWindow:
 ##                                        len(self.content._content))
         status += _time
         n = curses.COLS - 2 - len(status)
-        status = self.basename[:n] + status
+        status = self.basename[:n-1] + status
+        if self.auto_scroll_enable:
+            status += "*" 
+        
         self.screen.addstr(status, curses.A_REVERSE)
 
     def draw_message(self, message):
@@ -487,7 +617,8 @@ class MainWindow:
 
     def main_loop(self):
         cur_time = ''
-
+        _time = ''
+        
         while True: # main loop
             ch = self.screen.getch()
             #ch = curses.wgetch()
@@ -526,6 +657,34 @@ class MainWindow:
             elif ch in options.keys['scroll-down']:
                 self.scroll_down()
 
+            elif ch in options.keys['scroll-fifo']:
+                self.scroll_fifo()
+
+            elif ch in options.keys['auto-scroll']:
+                # start / stop
+                self.auto_scroll_enable = not self.auto_scroll_enable       # switch auto scroll mode
+                if self.auto_scroll_enable:
+                    self.message="Auto scroll On :" + str(self.auto_scroll_type) + " at " + str(options.auto_scroll_interval) + "sec"
+                    signal.alarm(options.auto_scroll_interval)    # start alarm timer 
+                    if not self.auto_scroll_type:
+                        self.message="Please! Select auto scroll type (f, Down, PgDown, Up, PgUp)"
+                else:
+                    self.message="Auto scroll Off"
+                    signal.alarm(0)                               # turn off timer
+                self.update_status = True
+
+            elif ch in options.keys['timer-inc']:
+                options.auto_scroll_interval += 1
+                self.message = "Interval: " + str(options.auto_scroll_interval) + "sec"
+                self.update_status = True
+
+            elif ch in options.keys['timer-dec']:
+                options.auto_scroll_interval -= 1
+                if options.auto_scroll_interval < 1:
+                    options.auto_scroll_interval = 1
+                self.message = "Interval: " + str(options.auto_scroll_interval) + "sec"
+                self.update_status = True
+
             elif ch in options.keys['next-page']:
                 self.next_page()
 
@@ -553,7 +712,7 @@ class MainWindow:
 ##                 print 'ch:', ch
 
             if self.message:
-                self.message_timeout = 1000 # milliseconds
+                self.message_timeout = 5000 # milliseconds
                 self.draw_message(self.message)
                 self.toggle_status(True) # in case if links has been removed
                 self.message = ''
