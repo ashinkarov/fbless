@@ -17,8 +17,9 @@ context_lines = 0
 status = True
 
 # screen size (columns x lines) . Set 0/None/False for auto detect
-columns=False #120
-lines=False #40
+columns=80
+# if True and 'columns' is set, the text would be centered
+center_text = False
 
 use_default_colors = True               # use default terminal colors
 
