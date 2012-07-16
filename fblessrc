@@ -1,0 +1,177 @@
+### General settings ###
+[general]
+
+# File to store your current positions for each book
+save_file = ~/.config/fbless/fbless_save
+
+# Number of lines that are preserved when ypu go to the next page
+context_lines: 0
+
+# Display status line?
+status: true
+
+# Screen width. Set to 0 for autodetect
+columns: 0
+
+# Center text when screen is wider than 'columns'
+center_text: false
+
+# Use default terminal background and foreground colors in place of 'none' (see
+# styles below)
+use_default_colors: true
+
+# Whether or not to replace fancy Unicode characters (dashes, quotes etc.) with
+# their ASCII counterparts. Set this to 'true' if your terminal has troubles
+# displaying Unicode.
+replace_chars: false
+
+# Your editor of choise
+# {byte_offset} and {filename} would be replaced by actual values
+# Note that filename is not being escaped, so you should do it yourself (i.e.
+# wrap it into double quotes)
+editor: vim -c go{byte_offset} "{filename}"
+
+# Interval for autoscroll in seconds
+auto_scroll_interval: 3
+
+### Styles ###
+
+# Accepted colors: black, blue, cyan (light greenish blue), green, magenta
+# (purpish red), red, white, yellow, none. The latter have different meaning
+# depending on the 'use_default_colors' setting: if it's 'true', 'none' would
+# mean default setting for that color (i.e., if foreground for some style is
+# 'none' and 'use_default_colors' is 'true', fbless would use the same
+# foreground color as your terminal uses). If the setting is false, curses
+# would use some other colors (possibly grey and black).
+
+[default]
+justify:           fill
+hyphenate:         true
+left_indent:       2
+right_indent:      2
+first_line_indent: 4
+bold:              false
+foreground:        white
+background:        black
+
+[p]
+justify:           fill
+hyphenate:         true
+left_indent:       2
+right_indent:      2
+first_line_indent: 4
+bold:              false
+foreground:        none
+background:        none
+
+[v]
+justify:           fill
+hyphenate:         true
+left_indent:       10
+right_indent:      4
+first_line_indent: 0
+foreground:        none
+background:        none
+
+[text-author]
+justify:           right
+hiphenate:         true
+left_indent:       20
+right_indent:      2
+first_line_indent: 0
+foreground:        yellow
+background:        none
+
+[epigraph]
+justify:           fill
+hiphenate:         true
+left_indent:       20
+right_indent:      2
+first_line_indent: 4
+foreground:        none
+background:        none
+
+[cite]
+justify:           fill
+hiphenate:         true
+left_indent:       8
+right_indent:      8
+first_line_indent: 8
+foreground:        none
+background:        none
+
+[title]
+justify:           center
+hiphenate:         false
+left_indent:       8
+right_indent:      8
+first_line_indent: 0
+foreground:        magenta
+background:        none
+
+[subtitle]
+justify:           center
+hiphenate:         false
+left_indent:       8
+right_indent:      8
+first_line_indent: 0
+foreground:        cyan
+background:        none
+
+[image]
+justify:           center
+hiphenate:         false
+left_indent:       0
+right_indent:      0
+first_line_indent: 0
+foreground:        none
+background:        none
+
+[strong]
+foreground:        magenta
+background:        none
+
+[emphasis]
+foreground:        cyan
+background:        none
+
+[style]
+foreground:        green
+background:        none
+
+[a]
+foreground:        red
+background:        none
+
+### Keys ###
+
+# Alphanumeric keys are denoted by the symbols they produce. The same goes for
+# !, @, #, $, %, ^, &, *, _, -, +, =, / and all kinds of parentheses. The comma
+# (,) is an exception: it is used as a delimiter, so when you mean it literally
+# (i.e. you want it to be a hotkey for some action) you should type it as
+# 'comma' (without quotes).  Backslash (\) should be escaped (i.e., typed twice
+# in a row). Other accepted names are: left, right, up, down, enter, backspace,
+# tab, home, end, pgup, pgdn.
+
+[keys]
+quit:          q, Q
+toggle-status: s
+search:        /
+search-next:   n
+scroll-fifo:   f
+auto-scroll:   a
+timer-inc:     +
+timer-dec:     -
+goto-percent:  5, G
+jump-link:     tab
+goto-link:     enter, right
+backward:      h, left
+forward:       l, backspace
+scroll-up:     k, up
+scroll-down:   j, down
+prev-page:     pgup
+next-pagr:     pgdn, space
+goto-home:     home, g
+goto-end:      end
+edit-xml:      e
+
