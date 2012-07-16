@@ -598,7 +598,8 @@ class MainWindow:
         byte_index = par.byte_index
         curses.def_prog_mode()          # save current tty modes
         curses.endwin()
-        os.system(options.editor % (byte_index, self.filename))
+        os.system(options.editor.format(byte_offset = byte_index,
+                filename = self.filename))
         self.screen = curses.initscr()
 
 
