@@ -133,7 +133,7 @@ keys = {
     'jump-link'     : (ord('\t'),),
     'goto-link'     : (curses.KEY_ENTER, ord('\n'), curses.KEY_RIGHT),
     'backward'      : (curses.KEY_LEFT,ord('h')),
-    'foreward'      : (curses.KEY_BACKSPACE, ord('l'),),
+    'forward'       : (curses.KEY_BACKSPACE, ord('l'),),
     'scroll-up'     : (curses.KEY_UP, ord('k')),
     'scroll-down'   : (curses.KEY_DOWN,ord('j')),
     'next-page'     : (ord(' '), curses.KEY_NPAGE),

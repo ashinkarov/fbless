@@ -388,7 +388,7 @@ class MainWindow:
             self.par_index, self.line_index = pos
             self.redraw_scr()
 
-    def goto_foreward(self):
+    def goto_forward(self):
         if self.fore_history:
             self.update_status = True
             pos = self.fore_history.pop()
@@ -636,8 +636,8 @@ class MainWindow:
             elif ch in options.keys['backward']:
                 self.goto_backward()
 
-            elif ch in options.keys['foreward']:
-                self.goto_foreward()
+            elif ch in options.keys['forward']:
+                self.goto_forward()
 
             elif ch in options.keys['scroll-up']:
                 self.scroll_up()
