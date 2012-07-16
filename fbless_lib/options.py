@@ -2,32 +2,30 @@
 # -*- mode: python; coding: utf-8; -*-
 #
 
-## COLOR_BLACK   Black
-## COLOR_BLUE    Blue
-## COLOR_CYAN    Cyan (light greenish blue)
-## COLOR_GREEN   Green
-## COLOR_MAGENTA Magenta (purplish red)
-## COLOR_RED     Red
-## COLOR_WHITE   White
-## COLOR_YELLOW  Yellow
 import curses
+import ConfigParser
+import os
+
+### Defaults
 
 save_file = '~/.config/fbless/fbless_save'
 context_lines = 0
 status = True
 
-# screen size (columns x lines) . Set 0/None/False for auto detect
-columns = False #80
+# screen width. 0 means autodetect
+columns = 0
 # if True and 'columns' is set, the text would be centered
 center_text = False
 
-use_default_colors = True               # use default terminal colors
+# use default terminal colors
+use_default_colors = True
 
 replace_chars = False
 
 editor = 'vim -c go{byte_offset} "{filename}"'
 
-auto_scroll_interval = 3                # interval for autoscroll in sec
+# interval for autoscroll in sec
+auto_scroll_interval = 3
 
 options = {
     'default':     {'justify'           : 'fill',
@@ -119,7 +117,6 @@ options = {
                     },
     }
 
-
 keys = {
     'quit'          : (ord('q'), ord('Q')),
     'toggle-status' : (ord('s'),),
@@ -142,4 +139,105 @@ keys = {
     'goto-end'      : (curses.KEY_END,),
     'edit-xml'      : (ord('o'),),
 }
+
+### Loading configuration
+
+def read_style_settings(config, stylename):
+    """ Read settings for the given style from the given config.
+        
+        Try to cast values to the types they have in the options dictionary.
+    """ 
+    if stylename not in options.keys():
+        return
+
+    if stylename not in config.sections():
+        return
+
+    for (k, v) in options[stylename].items():
+        try:
+            # have to parse bool before int because the latter is implicitly
+            # casted to the former, thus causing attempt to parse bool as int
+            if isinstance(v, bool):
+                options[stylename][k] = config.getboolean(stylename, k)
+            # foreground and background are some integral constants, but in
+            # config they are represented by string values
+            elif isinstance(v, int) and k not in ['foreground', 'background']:
+                options[stylename][k] = config.getint(stylename, k)
+            else:
+                options[stylename][k] = config.get(stylename, k)
+        except ConfigParser.NoOptionError:
+            # It's okay, user simply didn't bother to redefine the option
+            pass
+
+        # TODO: what could go wrong? Can we provide user with meaningful error
+        # messages and not just staketraces?
+
+    # In config, colors are specified with strings, but we need curses
+    # constants. Let's convert 'em all!
+    colors = { 'black'   : curses.COLOR_BLACK,
+               'blue'    : curses.COLOR_BLUE,
+               'cyan'    : curses.COLOR_CYAN,
+               'green'   : curses.COLOR_GREEN,
+               'magenta' : curses.COLOR_MAGENTA,
+               'red'     : curses.COLOR_RED,
+               'white'   : curses.COLOR_WHITE,
+               'yellow'  : curses.COLOR_YELLOW,
+               'none'    : None }
+    for style in options.keys():
+        for c in ['foreground', 'background']:
+            if isinstance(options[style][c], str):
+                options[style][c] = colors[options[style][c]]
+
+config = ConfigParser.RawConfigParser()
+expand = lambda x: os.path.expanduser(x)
+config.read(map(expand, ["~/.config/fbless/fblessrc", "~/.fblessrc"]))
+
+for style in options.keys():
+    read_style_settings(config, style)
+
+try:
+    context_lines = config.getint('general', 'context_lines')
+    auto_scroll_interval = config.getint('general', 'auto_scroll_interval')
+    columns = config.getint('general', 'columns')
+    
+    status = config.getboolean('general', 'status')
+    center_text = config.getboolean('general', 'center_text')
+    use_default_colors = config.getboolean('general', 'use_default_colors')
+    replace_chars = config.getboolean('general', 'replace_chars')
+         
+    editor = config.get('general', 'editor')
+except ConfigParser.NoOptionError:
+    pass
+
+for key in keys.keys():
+    try:
+        bindings = config.get('keys', key)
+        # curses needs codes, not actual symbols keys produce. Moreover, some
+        # keys are specified by the name like 'space' or 'pgdn'. So let's do
+        # some processing.
+        processed = []
+        special_keys = {
+            'left'      : curses.KEY_LEFT,
+            'right'     : curses.KEY_RIGHT,
+            'up'        : curses.KEY_UP,
+            'down'      : curses.KEY_DOWN,
+            'enter'     : curses.KEY_ENTER,
+            'backspace' : curses.KEY_BACKSPACE,
+            'home'      : curses.KEY_HOME,
+            'end'       : curses.KEY_END,
+            'pgup'      : curses.KEY_PPAGE,
+            'pgdn'      : curses.KEY_NPAGE,
+            'tab'       : ord('\t'),
+            # we use comma as a delimiter between bindings in config, so we had
+            # to create alias for cases when user wants it to be hotkey, too
+            'comma'     : ord(','), }
+
+        for b in bindings.split(','):
+            if b.strip() not in special_keys.keys():
+                processed.append(ord(b.strip()))
+            else:
+                processed.append(special_keys[b.strip()])
+        keys[key] = processed
+    except ConfigParser.NoOptionError:
+        pass
 
