@@ -82,19 +82,6 @@ class MainWindow:
         screen.nodelay(1)
         screen.scrollok(True)
         #screen.idlok(True)
-        # set screen size from config
-        if options.lines:
-            if options.lines > curses.LINES or options.lines < const.MIN_LINES:
-                raise NameError, "ERROR: Can't set screen size with " + str(options.lines) + " lines. Posible range: " + str(const.MIN_LINES) + "-" + str(curses.LINES) + ". See options"
-                return -1
-            curses.LINES=options.lines
-        if options.columns:
-            if options.columns > curses.COLS or options.columns < const.MIN_COLUMNS:
-                raise NameError, "ERROR: Can't set screen size with " + str(options.columns) + " columns from options. Posible range: " + str(const.MIN_COLUMNS) + "-" + str(curses.COLS) + ". See options"
-                return -1
-            curses.COLS=options.columns
-        #
-        
 
     def load_positions(self):
         positions = []
@@ -611,7 +598,8 @@ class MainWindow:
         byte_index = par.byte_index
         curses.def_prog_mode()          # save current tty modes
         curses.endwin()
-        os.system(options.editor % (byte_index, self.filename))
+        os.system(options.editor.format(byte_offset = byte_index,
+                filename = self.filename))
         self.screen = curses.initscr()
 
 
@@ -697,8 +685,8 @@ class MainWindow:
             elif ch in options.keys['goto-end']:
                 self.goto_end()
 
-##             elif ch in options.keys['edit-xml']:
-##                 self.edit_xml()
+            elif ch in options.keys['edit-xml']:
+                self.edit_xml()
 
 ##             elif ch in (curses.KEY_MOUSE,):
 ##                 print 'mouse:', curses.getmouse()

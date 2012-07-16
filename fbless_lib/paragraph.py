@@ -5,7 +5,7 @@ import sys
 import locale
 
 from hyphenation import Hyphenation
-from options import options, replace_chars
+from options import options, replace_chars, center_text, columns
 
 
 #screen_cols = 80
@@ -129,7 +129,10 @@ class Paragraph:
             self.lines = ['']
             return
 
-        max_len = self.scr_cols - self.left_indent - self.right_indent
+        if columns:
+            max_len = columns - self.left_indent - self.right_indent
+        else:
+            max_len = self.scr_cols - self.left_indent - self.right_indent
 
         offsets = []
         prev_offset = 0
@@ -238,9 +241,17 @@ class Paragraph:
                 spaces = ' ' * (self.left_indent + d)
             else: # left or fill
                 spaces = ' ' * self.left_indent
-            if spaces:
-                ln.insert(0, attr.left_spaces)
-                ln.insert(1, spaces)
+
+            if center_text:
+                # to center text, we pad it with spaces from the left
+                padding  = self.scr_cols - max_len
+                padding -= self.left_indent + self.right_indent
+                padding /= 2 
+                padding = ' ' * padding
+                spaces += padding
+
+            ln.insert(0, attr.left_spaces)
+            ln.insert(1, spaces)
 
         self.lines = lines
 
