@@ -86,7 +86,7 @@ class MainWindow:
     def load_positions(self):
         positions = []
         try:
-            d = open(os.path.expanduser(options.rc_file)).read()
+            d = open(os.path.expanduser(options.save_file)).read()
         except:
             pass
         else:
@@ -105,7 +105,7 @@ class MainWindow:
         for l in positions:
             if l[0] != self.filename:
                 save_pos.append(l)
-        fd = open(os.path.expanduser(options.rc_file), 'w')
+        fd = open(os.path.expanduser(options.save_file), 'w')
         for l in save_pos:
             print >> fd, ' '.join(l)
 

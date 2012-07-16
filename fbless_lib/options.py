@@ -12,7 +12,7 @@
 ## COLOR_YELLOW  Yellow
 import curses
 
-rc_file = '~/.fbless_save'
+save_file = '~/.config/fbless/fbless_save'
 context_lines = 0
 status = True
 
