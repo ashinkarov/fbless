@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- mode: python; coding: utf-8; -*-
 
 import sys
@@ -24,7 +23,8 @@ hyph = Hyphenation()
 # u'\u201d' -> ''
 # u'\u201e' -> ,,
 # u'\xad'   -> мягкий перенос
-def replace(s):
+def replace(s):  # TODO: Не уверен, что это счастье нужно в век utf8
+# Стоит в зависимости от локали поведение менять, думаю
     return (s
             .replace(u'\u2013', u'-')
             .replace(u'\u2014', u'-')

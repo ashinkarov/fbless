@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- mode: python; coding: utf-8; -*-
 #
 # $Id: hyphenation.py,v 1.2 2005/07/12 21:14:18 conr Exp $

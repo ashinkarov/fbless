@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- mode: python; coding: utf-8; -*-
 # (c) Con Radchenko mailto:lankier@gmail.com
+# Modified by crowd https://github.com/matimatik/fbless/
 
 import sys
 import locale
