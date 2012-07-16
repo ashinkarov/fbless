@@ -288,19 +288,19 @@ class MainWindow:
 
     def search(self):
         search_msg = 'Search pattern: '
-	self.update_status = True
+        self.update_status = True
         self.screen.move(curses.LINES-1, 0)
         self.screen.clrtoeol()
         self.screen.addstr(search_msg)
         self.screen.nodelay(0)
 	
-	curses.echo ()
-	s = self.screen.getstr ()
-	curses.noecho ()
+        curses.echo ()
+        s = self.screen.getstr ()
+        curses.noecho ()
         
-	# Ignore the erors happening when deleating the
-	# utf8 charactes.
-	s = unicode(s, default_charset, errors='ignore')
+    	# Ignore the erors happening when deleating the
+    	# utf8 charactes.
+        s = unicode(s, default_charset, errors='ignore')
         self.screen.nodelay(1)
         #print 'search:', s.encode(default_charset)
         if not s:
@@ -336,28 +336,28 @@ class MainWindow:
         self.screen.addstr('Go(%): ')
         self.screen.nodelay(0)
         
-	curses.echo()
+        curses.echo()
         s = self.screen.getstr()
         curses.noecho()
 
-	# Ignore the erors happening when deleating the
-	# utf8 charactes.
-	s = unicode (s, default_charset, errors='ignore')
-	s = s.encode (default_charset)
+        # Ignore the erors happening when deleating the
+        # utf8 charactes.
+        s = unicode (s, default_charset, errors='ignore')
+        s = s.encode (default_charset)
         self.update_status = True
         try:
             pos = float(s)
         except:
-	    self.redraw_scr()
+            self.redraw_scr()
             return
         if pos < 0 or pos > 100:
-	    self.redraw_scr()
-	    return
+            self.redraw_scr()
+            return
 
         if 1: #pos:
             self.par_index, self.line_index = self.content.get_position(pos)
         
-	self.redraw_scr()
+        self.redraw_scr()
         self.screen.nodelay(1)
 
     def goto_link(self):
@@ -466,8 +466,8 @@ class MainWindow:
         """Execute functions by alarm as timer"""
         # get scroll_type and exec it function
         if self.auto_scroll_type:
-                func=getattr(self,self.auto_scroll_type)
-                func()
+            func=getattr(self,self.auto_scroll_type)
+            func()
         signal.alarm(options.auto_scroll_interval)
 
 
