@@ -1,8 +1,10 @@
-### General settings ###
-[general]
+[paths]
 
 # File to store your current positions for each book
-save_file = ~/.config/fbless/fbless_save
+save_file = ~/.cache/fbless/fbless_save
+
+### General settings ###
+[general]
 
 # Number of lines that are preserved when ypu go to the next page
 context_lines: 0
