@@ -17,7 +17,7 @@ context_lines = 0
 status = True
 
 # screen size (columns x lines) . Set 0/None/False for auto detect
-columns=80
+columns = False #80
 # if True and 'columns' is set, the text would be centered
 center_text = False
 
