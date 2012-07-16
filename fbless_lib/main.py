@@ -105,7 +105,14 @@ class MainWindow:
         for l in positions:
             if l[0] != self.filename:
                 save_pos.append(l)
-        fd = open(os.path.expanduser(options.save_file), 'w')
+        save_file = os.path.expanduser(options.save_file)
+        # it may so happen that user would specify path with non-existent
+        # directories in it. In such cases open() would fail. To prevent that,
+        # we create all the directories.
+        dirs = os.path.dirname(save_file)
+        if not os.path.exists(dirs):
+            os.makedirs(os.path.dirname(save_file))
+        fd = open(save_file, 'w')
         for l in save_pos:
             print >> fd, ' '.join(l)
 
