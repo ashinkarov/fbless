@@ -195,49 +195,52 @@ config.read(map(expand, ["~/.config/fbless/fblessrc", "~/.fblessrc"]))
 for style in options.keys():
     read_style_settings(config, style)
 
-try:
-    context_lines = config.getint('general', 'context_lines')
-    auto_scroll_interval = config.getint('general', 'auto_scroll_interval')
-    columns = config.getint('general', 'columns')
-    
-    status = config.getboolean('general', 'status')
-    center_text = config.getboolean('general', 'center_text')
-    use_default_colors = config.getboolean('general', 'use_default_colors')
-    replace_chars = config.getboolean('general', 'replace_chars')
-         
-    editor = config.get('general', 'editor')
-except ConfigParser.NoOptionError:
-    pass
-
-for key in keys.keys():
+if 'general' in config.sections():
     try:
-        bindings = config.get('keys', key)
-        # curses needs codes, not actual symbols keys produce. Moreover, some
-        # keys are specified by the name like 'space' or 'pgdn'. So let's do
-        # some processing.
-        processed = []
-        special_keys = {
-            'left'      : curses.KEY_LEFT,
-            'right'     : curses.KEY_RIGHT,
-            'up'        : curses.KEY_UP,
-            'down'      : curses.KEY_DOWN,
-            'enter'     : curses.KEY_ENTER,
-            'backspace' : curses.KEY_BACKSPACE,
-            'home'      : curses.KEY_HOME,
-            'end'       : curses.KEY_END,
-            'pgup'      : curses.KEY_PPAGE,
-            'pgdn'      : curses.KEY_NPAGE,
-            'tab'       : ord('\t'),
-            # we use comma as a delimiter between bindings in config, so we had
-            # to create alias for cases when user wants it to be hotkey, too
-            'comma'     : ord(','), }
+        context_lines = config.getint('general', 'context_lines')
+        auto_scroll_interval = config.getint('general', 'auto_scroll_interval')
+        columns = config.getint('general', 'columns')
+        
+        status = config.getboolean('general', 'status')
+        center_text = config.getboolean('general', 'center_text')
+        use_default_colors = config.getboolean('general', 'use_default_colors')
+        replace_chars = config.getboolean('general', 'replace_chars')
+             
+        editor = config.get('general', 'editor')
+    except ConfigParser.NoOptionError:
+        # User choose not to redefine some value. No problem!
+        pass
 
-        for b in bindings.split(','):
-            if b.strip() not in special_keys.keys():
-                processed.append(ord(b.strip()))
-            else:
-                processed.append(special_keys[b.strip()])
-        keys[key] = processed
+if 'keys' in config.sections():
+    try:
+        for key in keys.keys():
+            bindings = config.get('keys', key)
+            # curses needs codes, not actual symbols keys produce. Moreover, some
+            # keys are specified by the name like 'space' or 'pgdn'. So let's do
+            # some processing.
+            processed = []
+            special_keys = {
+                'left'      : curses.KEY_LEFT,
+                'right'     : curses.KEY_RIGHT,
+                'up'        : curses.KEY_UP,
+                'down'      : curses.KEY_DOWN,
+                'enter'     : curses.KEY_ENTER,
+                'backspace' : curses.KEY_BACKSPACE,
+                'home'      : curses.KEY_HOME,
+                'end'       : curses.KEY_END,
+                'pgup'      : curses.KEY_PPAGE,
+                'pgdn'      : curses.KEY_NPAGE,
+                'tab'       : ord('\t'),
+                # we use comma as a delimiter between bindings in config, so we had
+                # to create alias for cases when user wants it to be hotkey, too
+                'comma'     : ord(','), }
+
+            for b in bindings.split(','):
+                if b.strip() not in special_keys.keys():
+                    processed.append(ord(b.strip()))
+                else:
+                    processed.append(special_keys[b.strip()])
+            keys[key] = processed
     except ConfigParser.NoOptionError:
         pass
 
