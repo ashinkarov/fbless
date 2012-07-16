@@ -9,13 +9,6 @@ Curses
 
 Использование
 =============
-Прежде всего, скопируйте и отредактируйте конфиг (см. Настройки):
-
-$ cp fbless_lib/options.py.example fbless_lib/options.py
-$ $EDITOR fbless_lib/options.py
-
-Чтобы приступить к чтению, достаточно указать программе имя файла с книгой:
-
 $ ./fbless /path/to/file.fb2
 
 Можно также указывать файлы, сжатые при помощи zip, gzip и bzip2.
