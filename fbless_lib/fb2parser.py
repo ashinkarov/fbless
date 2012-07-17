@@ -1,6 +1,7 @@
 # -*- mode: python; coding: utf-8; -*-
 
-import sys, string
+import sys
+import string
 from cStringIO import StringIO
 import xml.sax
 import xml.parsers.expat
@@ -36,10 +37,14 @@ class ContentHandler:
             self.prev_paragraph_is_empty = True
 
     def startElement(self, name, attrs):
-        if name == 'description': self.is_desc = True
-        elif name == 'body': self.is_body = True
-        elif name == 'epigraph': self.is_epigraph = True
-        elif name == 'cite': self.is_cite = True
+        if name == 'description':
+            self.is_desc = True
+        elif name == 'body':
+            self.is_body = True
+        elif name == 'epigraph':
+            self.is_epigraph = True
+        elif name == 'cite':
+            self.is_cite = True
         elif name == 'title':
             self.is_title = True
             self.cur_title = []
@@ -49,7 +54,7 @@ class ContentHandler:
             for atr in attrs.keys():
                 if atr.endswith('href'):
                     self.add_empty_line()
-                    self.cur_data = '['+attrs[atr][1:]+']'
+                    self.cur_data = '[' + attrs[atr][1:] + ']'
                     break
         elif name == 'binary':
             raise StopParsing
@@ -83,29 +88,45 @@ class ContentHandler:
             if data and data.strip():
                 if self.is_title:
                     self.add_empty_line()
-                    self.content.append(Paragraph('title', data,
-                                                  attrs=self.attrs,
-                                                  lang=self.lang,
-                                                  id=self.cur_id,
-                                                  byte_index=_parser.CurrentByteIndex))
+                    self.content.append(
+                        Paragraph(
+                            'title', data,
+                            attrs=self.attrs,
+                            lang=self.lang,
+                            id=self.cur_id,
+                            byte_index=_parser.CurrentByteIndex,
+                        )
+                    )
                 elif self.is_epigraph and name == 'p':
-                    self.content.append(Paragraph('epigraph', data,
-                                                  attrs=self.attrs,
-                                                  lang=self.lang,
-                                                  id=self.cur_id,
-                                                  byte_index=_parser.CurrentByteIndex))
+                    self.content.append(
+                        Paragraph(
+                            'epigraph', data,
+                            attrs=self.attrs,
+                            lang=self.lang,
+                            id=self.cur_id,
+                            byte_index=_parser.CurrentByteIndex
+                        )
+                    )
                 elif self.is_cite and name == 'p':
-                    self.content.append(Paragraph('cite', data,
-                                                  attrs=self.attrs,
-                                                  lang=self.lang,
-                                                  id=self.cur_id,
-                                                  byte_index=_parser.CurrentByteIndex))
+                    self.content.append(
+                        Paragraph(
+                            'cite', data,
+                            attrs=self.attrs,
+                            lang=self.lang,
+                            id=self.cur_id,
+                            byte_index=_parser.CurrentByteIndex
+                        )
+                    )
                 else:
-                    self.content.append(Paragraph(name, data,
-                                                  attrs=self.attrs,
-                                                  lang=self.lang,
-                                                  id=self.cur_id,
-                                                  byte_index=_parser.CurrentByteIndex))
+                    self.content.append(
+                        Paragraph(
+                            name, data,
+                            attrs=self.attrs,
+                            lang=self.lang,
+                            id=self.cur_id,
+                            byte_index=_parser.CurrentByteIndex
+                        )
+                    )
                 self.prev_paragraph_is_empty = False
                 self.attrs = []
                 self.id = None
@@ -149,7 +170,7 @@ def fb2parse(data):
 
     # remove invalid chars
     tab = string.maketrans('', '')
-    data = data.translate(tab, '\07\032') # XXX: add other invalid chars here
+    data = data.translate(tab, '\07\032')  # XXX: add other invalid chars here
 
     content_handler = ContentHandler()
 
@@ -175,4 +196,3 @@ if __name__ == '__main__':
     c = fb2parse(file(fn).read())
     #for s, t in c:
     #    print t, s
-

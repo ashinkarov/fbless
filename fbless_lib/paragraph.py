@@ -13,49 +13,54 @@ default_charset = locale.getdefaultlocale()[1]
 
 hyph = Hyphenation()
 
-# u'\u2013' -> '--'
-# u'\u2014' -> '---'
-# u'\xa0'   -> неразрывный пробел
-# u'\u2026' -> dots...
-# u'\xab'   -> '<<'
-# u'\xbb'   -> '>>'
-# u'\u201c' -> ``
-# u'\u201d' -> ''
-# u'\u201e' -> ,,
-# u'\xad'   -> мягкий перенос
-def replace(s):  # TODO: Не уверен, что это счастье нужно в век utf8
-# Стоит в зависимости от локали поведение менять, думаю
+
+def replace(s):
+    """ Здесь происходит замена символов, если требуется
+        u'\u2013' -> '--'
+        u'\u2014' -> '---'
+        u'\xa0'   -> неразрывный пробел
+        u'\u2026' -> dots...
+        u'\xab'   -> '<<'
+        u'\xbb'   -> '>>'
+        u'\u201c' -> ``
+        u'\u201d' -> ''
+        u'\u201e' -> ,,
+        u'\xad'   -> мягкий перенос
+
+        Правда, параметры метода .replace(), почему-то иные стоят.
+    """
     return (s
-            .replace(u'\u2013', u'-')
-            .replace(u'\u2014', u'-')
-            .replace(u'\xa0'  , u' ')
-            .replace(u'\u2026', u'...')
-            #.replace(u'\xab'  , u'<<')
-            #.replace(u'\xbb'  , u'>>')
-            .replace(u'\xab'  , u'"')
-            .replace(u'\xbb'  , u'"')
-            .replace(u'\u201c', u'"')
-            .replace(u'\u201d', u'"')
-            .replace(u'\u201e', u'"')
-            .replace(u'\u2116', u'No')
-            .replace(u'\xad', '')
-            .replace(u'\u2019', '\'')
-            )
+        .replace(u'\u2013', u'-')
+        .replace(u'\u2014', u'-')
+        .replace(u'\xa0', u' ')
+        .replace(u'\u2026', u'...')
+        #.replace(u'\xab', u'<<')
+        #.replace(u'\xbb', u'>>')
+        .replace(u'\xab', u'"')
+        .replace(u'\xbb', u'"')
+        .replace(u'\u201c', u'"')
+        .replace(u'\u201d', u'"')
+        .replace(u'\u201e', u'"')
+        .replace(u'\u2116', u'No')
+        .replace(u'\xad', '')
+        .replace(u'\u2019', '\'')
+    )
 
 
 class Attr:
-    keys = {'newline' : -1,
-            'normal'  : 0,
-            'strong'  : 1,
-            'emphasis': 2,
-            'a'       : 3,
-            'style'   : 4,
-            #
-            'left_spaces' : 10,
-            #
-            'search'       : 20,
-            'cancel_search': 21,
-            }
+    keys = {
+        'newline': -1,
+        'normal': 0,
+        'strong': 1,
+        'emphasis': 2,
+        'a': 3,
+        'style': 4,
+        #
+        'left_spaces': 10,
+        #
+        'search': 20,
+        'cancel_search': 21,
+    }
 
     def __init__(self):
         self.__dict__.update(self.keys)
@@ -99,7 +104,7 @@ class Paragraph:
         len_words = len([i for i in words if i == ' ']) + 1
         sum_words = sum(len(i) for i in words
                         if not isinstance(i, (int, tuple)))
-        min_space, long_space_num = divmod(max_len-sum_words, len_words-1)
+        min_space, long_space_num = divmod(max_len - sum_words, len_words - 1)
         short_space_num = len_words - long_space_num - 1
         bres = short_space_num / 2
         s = []
@@ -107,10 +112,10 @@ class Paragraph:
             if w == ' ':
                 if bres > 0:
                     bres -= long_space_num
-                    s.append(' '*(min_space+1))
+                    s.append(' ' * (min_space + 1))
                 else:
                     bres += short_space_num
-                    s.append(' '*(min_space+2))
+                    s.append(' ' * (min_space + 2))
             else:
                 s.append(w)
         return s
@@ -124,7 +129,8 @@ class Paragraph:
                 break
 
     def split_string(self):
-        if self.lines: return # already splitted
+        if self.lines:
+            return  # already splitted
         if self.data == '\n':
             self.lines = ['']
             return
@@ -150,11 +156,11 @@ class Paragraph:
         #print offsets
 
         first_line_offset = self.first_line_indent
-        words = [' '*(self.first_line_indent-1)]
+        words = [' ' * (self.first_line_indent - 1)]
         last_line = []
 
         line = []
-        line.append(' '*self.first_line_indent)
+        line.append(' ' * self.first_line_indent)
         line_len = self.first_line_indent
         attr_begin, cur_attr_type = offsets[0]
         line.append(cur_attr_type)
@@ -178,7 +184,7 @@ class Paragraph:
                             wl = hyph.hyphenate(word, self.lang)
                             for ww in wl:
                                 if line_len + len(ww) + 1 <= max_len:
-                                    line.append(ww+'-')
+                                    line.append(ww + '-')
                                     word = word[len(ww):]
                                     if word.startswith('-'):
                                         word = word[1:]
@@ -198,21 +204,20 @@ class Paragraph:
 
                     line.append(word)
                     line.append(' ')
-                    line_len += len(word)+1
+                    line_len += len(word) + 1
 
                 if not data.endswith(' ') and line:
                     line.pop()
                     line_len -= 1
 
             attr_begin = attr_end
-            if next_attr_type  == attr.search:
+            if next_attr_type == attr.search:
                 in_search = True
             elif next_attr_type == attr.cancel_search:
                 in_search = False
             else:
                 cur_attr_type = next_attr_type
             line.append(next_attr_type)
-
 
         lines = []
         ln = []
@@ -239,14 +244,14 @@ class Paragraph:
                                if not isinstance(s, (int, tuple)))
                 d = max_len - len_line
                 spaces = ' ' * (self.left_indent + d)
-            else: # left or fill
+            else:  # left or fill
                 spaces = ' ' * self.left_indent
 
             if center_text:
                 # to center text, we pad it with spaces from the left
-                padding  = self.scr_cols - max_len
+                padding = self.scr_cols - max_len
                 padding -= self.left_indent + self.right_indent
-                padding /= 2 
+                padding /= 2
                 padding = ' ' * padding
                 spaces += padding
 
@@ -256,11 +261,18 @@ class Paragraph:
         self.lines = lines
 
 
-
-
 if __name__ == '__main__':
-    s=unicode('Давно было готово заглавие, использующее титул замечательной монографии :вана Аксенова "Пикассо и окрестности". Предрешен был и тот свободный жанр "филологического романа", в котором написана моя любимая русская проза - от мандельштамовского "Разговора о Данте" до "Прогулок с Пушкиным" Синявского. Но что особенно важно, сама собой сформулировалась центральная тема - исповедь последнего советского поколения, голосом которого стал Сергей Довлатов.')
-    par=Paragraph(data=s, attrs=[(6, 10, attr.strong),
+    s = unicode(
+        'Давно было готово заглавие, использующее титул замечательной '
+        'монографии :вана Аксенова "Пикассо и окрестности". Предрешен '
+        'был и тот свободный жанр "филологического романа", в котором '
+        'написана моя любимая русская проза - от мандельштамовского '
+        '"Разговора о Данте" до "Прогулок с Пушкиным" Синявского. Но '
+        'что особенно важно, сама собой сформулировалась центральная '
+        'тема - исповедь последнего советского поколения, голосом '
+        'которого стал Сергей Довлатов.'
+    )
+    par = Paragraph(data=s, attrs=[(6, 10, attr.strong),
                                  (100, 240, attr.strong)])
     par.scr_cols = 48
     par.search_offsets = [(0, 50), (78, 120)]
@@ -286,7 +298,7 @@ if __name__ == '__main__':
                     #sys.stdout.write('|')
                     sys.stdout.write(w.encode('utf-8', 'replace'))
             print
-    print '~'*(par.scr_cols-par.right_indent)
+    print '~' * (par.scr_cols - par.right_indent)
 
     #par.print_str()
 ##     for s in par.lines:
@@ -296,4 +308,3 @@ if __name__ == '__main__':
 ##             for w in s:
 ##                 print w,
 ##             print
-

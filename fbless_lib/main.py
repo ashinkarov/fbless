@@ -1,7 +1,8 @@
 # -*- mode: python; coding: utf-8; -*-
 #
 
-import sys, os
+import sys
+import os
 import re
 import traceback
 import locale
@@ -64,13 +65,16 @@ class MainWindow:
 
         #~curses.mousemask(curses.ALL_MOUSE_EVENTS)
 
-        self.auto_scroll_type = None                                 # auto scroll type not selected. TODO: load status from rc_file 
-        self.auto_scroll_enable = False                              # disable auto scroll at startup
-        signal.signal(signal.SIGALRM, self.alarm_handler)            # alarm as timer for auto scroll
-        self.c_fifo_scroll_line = 0                                  # counter for fifo auto scroll
+        self.auto_scroll_type = None  # auto scroll type not selected.
+        # TODO: load status from rc_file
+        self.auto_scroll_enable = False  # disable auto scroll at startup
+        signal.signal(signal.SIGALRM, self.alarm_handler)
+        # alarm as timer for auto scroll
+        self.c_fifo_scroll_line = 0  # counter for fifo auto scroll
 
-        self.link_pos = [] # for <a> elements; list of tuples (y, x, link_name)
-        self.cur_link = 0         # current cursor position; index of link_pos
+        self.link_pos = []
+        # for <a> elements; list of tuples (y, x, link_name)
+        self.cur_link = 0  # current cursor position; index of link_pos
         self.content = create_content(self.filename, curses.COLS)
         self.update_status = True
 
@@ -155,7 +159,7 @@ class MainWindow:
                     cur_attr = options.options['style']['color']
                 elif s == attr.left_spaces:
                     # leading spaces
-                    cur_attr = s #options.options['default']['color']
+                    cur_attr = s  # options.options['default']['color']
                 elif s == attr.search:
                     in_search = True
                     pass
@@ -188,11 +192,11 @@ class MainWindow:
             elif cur_attr is not None:
                 # strong, emphasis, etc...
                 color = curses.color_pair(cur_attr)
-                self.screen.addstr(s, color|a)
+                self.screen.addstr(s, color | a)
             else:
                 if opt['color'] is not None:
                     color = curses.color_pair(opt['color'])
-                    self.screen.addstr(s, color|a)
+                    self.screen.addstr(s, color | a)
                 else:
                     self.screen.addstr(s, a)
 
@@ -221,11 +225,14 @@ class MainWindow:
         #options.status = not options.status
         self.update_status = True
         if not status:
-            self.screen.move(curses.LINES-1, 0)
+            self.screen.move(curses.LINES - 1, 0)
             self.screen.clrtoeol()
             n = curses.LINES - 1
             try:
-                s, type = self.content.get(self.par_index, self.line_index+n-self.c_fifo_scroll_line)
+                s, type = self.content.get(
+                    self.par_index,
+                    self.line_index + n - self.c_fifo_scroll_line
+                )
             except IndexError:
                 # EOF
                 pass
@@ -282,9 +289,10 @@ class MainWindow:
             #    return ''
             elif ch in (curses.KEY_BACKSPACE, curses.KEY_LEFT,
                         ascii.DEL, ascii.BS):
-                if not s: break
+                if not s:
+                    break
                 y, x = curses.getsyx()
-                self.screen.move(y, x-1)
+                self.screen.move(y, x - 1)
                 self.screen.delch()
                 s = s[:-1]
             elif validator(ch):
@@ -295,17 +303,17 @@ class MainWindow:
     def search(self):
         search_msg = 'Search pattern: '
         self.update_status = True
-        self.screen.move(curses.LINES-1, 0)
+        self.screen.move(curses.LINES - 1, 0)
         self.screen.clrtoeol()
         self.screen.addstr(search_msg)
         self.screen.nodelay(0)
-	
-        curses.echo ()
-        s = self.screen.getstr ()
-        curses.noecho ()
-        
-    	# Ignore the erors happening when deleating the
-    	# utf8 charactes.
+
+        curses.echo()
+        s = self.screen.getstr()
+        curses.noecho()
+
+        # Ignore the erors happening when deleating the
+        # utf8 charactes.
         s = unicode(s, default_charset, errors='ignore')
         self.screen.nodelay(1)
         #print 'search:', s.encode(default_charset)
@@ -328,28 +336,28 @@ class MainWindow:
             return
         self.update_status = True
         found = self.content.search(self.content.search_string,
-                                    self.par_index, self.line_index+1)
+                                    self.par_index, self.line_index + 1)
         if not found:
             self.redraw_scr()
-            self.message = 'ERROR: Pattern not found ' # 
+            self.message = 'ERROR: Pattern not found '
             return
         self.par_index, self.line_index = found
         self.redraw_scr()
 
     def goto_percent(self):
-        self.screen.move(curses.LINES-1, 0)
+        self.screen.move(curses.LINES - 1, 0)
         self.screen.clrtoeol()
         self.screen.addstr('Go(%): ')
         self.screen.nodelay(0)
-        
+
         curses.echo()
         s = self.screen.getstr()
         curses.noecho()
 
         # Ignore the erors happening when deleating the
         # utf8 charactes.
-        s = unicode (s, default_charset, errors='ignore')
-        s = s.encode (default_charset)
+        s = unicode(s, default_charset, errors='ignore')
+        s = s.encode(default_charset)
         self.update_status = True
         try:
             pos = float(s)
@@ -360,9 +368,9 @@ class MainWindow:
             self.redraw_scr()
             return
 
-        if 1: #pos:
+        if 1:  # pos:
             self.par_index, self.line_index = self.content.get_position(pos)
-        
+
         self.redraw_scr()
         self.screen.nodelay(1)
 
@@ -413,7 +421,7 @@ class MainWindow:
     def scroll_up(self):
         # set scroll type for auto scroll
         self.auto_scroll_type = const.SCROLL_UP
-        # redraw after auto scroll 
+        # redraw after auto scroll
         if self.c_fifo_scroll_line > 0:
             self.line_index -= self.c_fifo_scroll_line
             self.redraw_scr()
@@ -443,7 +451,7 @@ class MainWindow:
     def scroll_down(self):
         # set scroll type for auto scroll
         self.auto_scroll_type = const.SCROLL_DOWN
-        # redraw after auto scroll 
+        # redraw after auto scroll
         if self.c_fifo_scroll_line > 0:
             self.line_index -= self.c_fifo_scroll_line
             self.redraw_scr()
@@ -451,16 +459,16 @@ class MainWindow:
 
         n = curses.LINES - options.status
         try:
-            s, type = self.content.get(self.par_index, self.line_index+n)
+            s, type = self.content.get(self.par_index, self.line_index + n)
         except IndexError:
             # EOF
             return
-     
+
         self.toggle_status(options.status)
         self.update_links_pos(1)
 
         self.screen.scroll(1)
-        self.screen.move(curses.LINES-1-options.status, 0)
+        self.screen.move(curses.LINES - 1 - options.status, 0)
         self.screen.clrtoeol()
         self.add_str(s, type)
 
@@ -468,17 +476,16 @@ class MainWindow:
         self.par_index, self.line_index = self.content.indexes(
             self.par_index, self.line_index)
 
-    def alarm_handler( self, signum, frame ):
+    def alarm_handler(self, signum, frame):
         """Execute functions by alarm as timer"""
         # get scroll_type and exec it function
         if self.auto_scroll_type:
-            func=getattr(self,self.auto_scroll_type)
+            func = getattr(self, self.auto_scroll_type)
             func()
         signal.alarm(options.auto_scroll_interval)
 
-
     def scroll_fifo(self):
-        """ FIFO type auto scroll 
+        """ FIFO type auto scroll
 
             Autoscroll by replacing already readed lines"""
 
@@ -486,7 +493,7 @@ class MainWindow:
         self.auto_scroll_type = const.SCROLL_FIFO
         n = curses.LINES - options.status
         try:
-            s, type = self.content.get(self.par_index, self.line_index+n)
+            s, type = self.content.get(self.par_index, self.line_index + n)
         except IndexError:
             # EOF
             return
@@ -499,10 +506,10 @@ class MainWindow:
             self.c_fifo_scroll_line = 0
         # erase previous pointer (*)
         if self.c_fifo_scroll_line > 0:
-            self.screen.move(self.c_fifo_scroll_line-1, 0)
+            self.screen.move(self.c_fifo_scroll_line - 1, 0)
             self.screen.addch(" ")
         else:
-            self.screen.move(n-1, 0)
+            self.screen.move(n - 1, 0)
             self.screen.addch(" ")
         # draw current string
         self.screen.move(self.c_fifo_scroll_line, 0)
@@ -512,23 +519,22 @@ class MainWindow:
         self.screen.move(self.c_fifo_scroll_line, 0)
         self.screen.addch("*")
         # erase next line
-        if self.c_fifo_scroll_line+1 < curses.LINES-options.status:
-            self.screen.move(self.c_fifo_scroll_line+1, 0)
+        if self.c_fifo_scroll_line + 1 < curses.LINES - options.status:
+            self.screen.move(self.c_fifo_scroll_line + 1, 0)
             self.screen.clrtoeol()
-        
-        self.c_fifo_scroll_line += 1       
+
+        self.c_fifo_scroll_line += 1
         self.line_index += 1
 
         self.par_index, self.line_index = self.content.indexes(
             self.par_index, self.line_index)
-
 
     def next_page(self):
         # set scroll type for auto scroll
         self.auto_scroll_type = const.NEXT_PAGE
         n = curses.LINES - options.context_lines - options.status
         try:
-            s, type = self.content.get(self.par_index, self.line_index+n)
+            s, type = self.content.get(self.par_index, self.line_index + n)
         except IndexError:
             # EOF
             return
@@ -576,7 +582,7 @@ class MainWindow:
         #print >> file('log', 'a'), '>>', self.screen.getbegyx()
 
     def draw_status(self, _time):
-        self.screen.move(curses.LINES-1, 0)
+        self.screen.move(curses.LINES - 1, 0)
         self.screen.clrtoeol()
         status = ''
         end_line = self.line_index + curses.LINES - 1
@@ -588,32 +594,35 @@ class MainWindow:
 ##                                        len(self.content._content))
         status += _time
         n = curses.COLS - 2 - len(status)
-        status = self.basename[:n-1] + status
+        status = self.basename[:n - 1] + status
         if self.auto_scroll_enable:
-            status += "*" 
-        
+            status += "*"
+
         self.screen.addstr(status, curses.A_REVERSE)
 
     def draw_message(self, message):
-        self.screen.move(curses.LINES-1, 0)
+        self.screen.move(curses.LINES - 1, 0)
         self.screen.clrtoeol()
         self.screen.addstr(message, curses.A_REVERSE)
 
     def edit_xml(self):
         par = self.content._content[self.par_index]
         byte_index = par.byte_index
-        curses.def_prog_mode()          # save current tty modes
+        curses.def_prog_mode()  # save current tty modes
         curses.endwin()
-        os.system(options.editor.format(byte_offset = byte_index,
-                filename = self.filename))
+        os.system(
+            options.editor.format(
+                byte_offset=byte_index,
+                filename=self.filename
+            )
+        )
         self.screen = curses.initscr()
-
 
     def main_loop(self):
         cur_time = ''
         _time = ''
-        
-        while True: # main loop
+
+        while True:  # main loop
             ch = self.screen.getch()
             #ch = curses.wgetch()
 
@@ -656,27 +665,46 @@ class MainWindow:
 
             elif ch in options.keys['auto-scroll']:
                 # start / stop
-                self.auto_scroll_enable = not self.auto_scroll_enable       # switch auto scroll mode
+                self.auto_scroll_enable = not self.auto_scroll_enable
+                # switch auto scroll mode
                 if self.auto_scroll_enable:
-                    self.message="Auto scroll On :" + str(self.auto_scroll_type) + " at " + str(options.auto_scroll_interval) + "sec"
-                    signal.alarm(options.auto_scroll_interval)    # start alarm timer 
+                    self.message = (
+                        "Auto scroll On :"
+                        + str(self.auto_scroll_type)
+                        + " at "
+                        + str(options.auto_scroll_interval)
+                        + "sec"
+                    )
+                    signal.alarm(options.auto_scroll_interval)
+                    # start alarm timer
                     if not self.auto_scroll_type:
-                        self.message="Please! Select auto scroll type (f, Down, PgDown, Up, PgUp)"
+                        self.message = (
+                            "Please! Select auto scroll type "
+                            "(f, Down, PgDown, Up, PgUp)"
+                        )
                 else:
-                    self.message="Auto scroll Off"
-                    signal.alarm(0)                               # turn off timer
+                    self.message = "Auto scroll Off"
+                    signal.alarm(0)  # turn off timer
                 self.update_status = True
 
             elif ch in options.keys['timer-inc']:
                 options.auto_scroll_interval += 1
-                self.message = "Interval: " + str(options.auto_scroll_interval) + "sec"
+                self.message = (
+                    "Interval: "
+                    + str(options.auto_scroll_interval)
+                    + "sec"
+                )
                 self.update_status = True
 
             elif ch in options.keys['timer-dec']:
                 options.auto_scroll_interval -= 1
                 if options.auto_scroll_interval < 1:
                     options.auto_scroll_interval = 1
-                self.message = "Interval: " + str(options.auto_scroll_interval) + "sec"
+                self.message = (
+                    "Interval: "
+                    + str(options.auto_scroll_interval)
+                    + "sec"
+                )
                 self.update_status = True
 
             elif ch in options.keys['next-page']:
@@ -706,9 +734,9 @@ class MainWindow:
 ##                 print 'ch:', ch
 
             if self.message:
-                self.message_timeout = 5000 # milliseconds
+                self.message_timeout = 5000  # milliseconds
                 self.draw_message(self.message)
-                self.toggle_status(True) # in case if links has been removed
+                self.toggle_status(True)  # in case if links has been removed
                 self.message = ''
 
             elif options.status:
@@ -721,7 +749,7 @@ class MainWindow:
                 if self.message_timeout <= 0:
                     self.message_timeout = 0
                     self.update_status = True
-                    self.toggle_status(options.status) # restore status
+                    self.toggle_status(options.status)  # restore status
 
             if self.update_status and self.message_timeout <= 0:
 
@@ -735,7 +763,7 @@ class MainWindow:
 
                 elif not options.status:
                     # move cursor to bottom-right corner
-                    self.screen.move(curses.LINES-1, curses.COLS-1)
+                    self.screen.move(curses.LINES - 1, curses.COLS - 1)
 
             self.update_status = False
             cur_time = _time
@@ -744,8 +772,6 @@ class MainWindow:
 
         # end of loop
         self.save_position()
-
-
 
 
 class Content:
@@ -794,7 +820,7 @@ class Content:
             par.search_offsets = []
             return
         offsets = []
-        regex = re.compile(s, re.IGNORECASE|re.UNICODE)
+        regex = re.compile(s, re.IGNORECASE | re.UNICODE)
         m = regex.search(par.data)
         while m:
             offsets.append((m.start(), m.end()))
@@ -826,7 +852,7 @@ class Content:
             par_index -= 1
             if i <= 0:
                 break
-        line_index = -i+1
+        line_index = -i + 1
         return par_index, line_index
 
     def position(self, par_index, line_index):
@@ -847,25 +873,26 @@ class Content:
 ##         for line in self._content[par_index].lines[:line_index]:
 ##             n += len(line)
 
-        pos = float(n)/self._content_len
-        if pos > 1: pos = 1
-        pos = int(pos*100)
+        pos = float(n) / self._content_len
+        if pos > 1:
+            pos = 1
+        pos = int(pos * 100)
         return pos
 
     def get_position(self, percent):
         # FIXME
-        percent = float(percent)/100
+        percent = float(percent) / 100
         total = self._content_len
         n = 0
         i = 0
         for par in self._content:
             n += len(par.data)
-            if float(n)/total > percent:
+            if float(n) / total > percent:
                 t = curses.LINES - options.context_lines - options.status
-                par_index, line_index = self.indexes(i, -t) # back one screen
+                par_index, line_index = self.indexes(i, -t)  # back one screen
                 return par_index, line_index
             i += 1
-        return i-1, 0
+        return i - 1, 0
 
     def _split_par(self, par):
         par.scr_cols = self.scr_cols
@@ -873,10 +900,10 @@ class Content:
         par.split_string()
 
     def search(self, s, par_index, line_index):
-        if par_index < len(self._content)-1:
+        if par_index < len(self._content) - 1:
             par_index, line_index = self.indexes(par_index, line_index)
         try:
-            regex = re.compile(s, re.IGNORECASE|re.UNICODE)
+            regex = re.compile(s, re.IGNORECASE | re.UNICODE)
         except re.error:
             return -1
 
@@ -908,7 +935,7 @@ class Content:
 
         found = do_search(self._content[par_index:])
         if found:
-            return found[0]+par_index, found[1]
+            return found[0] + par_index, found[1]
         # overwrapped search
         line_index = 0
         found = do_search(self._content[:par_index])
@@ -958,14 +985,14 @@ if __name__ == '__main__':
             s, t = c.get(pi, li)
         except IndexError:
             break
-        print t, '>'+s+'<'
+        print t, '>' + s + '<'
         pi, li = c.indexes()
         li += 1
         i += 1
         if i > 200:
             break
     print '---------->', pi, li
-    s, t = c.get(pi, li-32)
+    s, t = c.get(pi, li - 32)
     print s
     print c.indexes()
     #while True:
@@ -977,5 +1004,3 @@ if __name__ == '__main__':
 ##             curses.endwin()
 ##         except:
 ##             pass
-
-
