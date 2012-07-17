@@ -1,6 +1,6 @@
 # -*- mode: python; coding: utf-8; -*-
-#
-
+""" Default options dicts and config files parser
+"""
 import curses
 import ConfigParser
 import os
@@ -209,9 +209,6 @@ def typed_get(config, section, sectiondict, key, value):
             # we should make conversion
             return COLORS[value]
     elif isinstance(sectiondict[section][key], tuple) and section == 'keys':
-        # curses needs codes, not actual symbols keys produce.
-        # Moreover, some keys are specified by the name like
-        # 'space' or 'pgdn'. So let's do some processing.
         return tuple(
             [convert_key(keyname.strip()) for keyname in value.split(',')]
         )
@@ -219,11 +216,16 @@ def typed_get(config, section, sectiondict, key, value):
         return config.get(section, key)
 
 
-def convert_key(key):
-    if key in SPECIAL_KEYS:
-        return SPECIAL_KEYS[key]
+def convert_key(keyname):
+    """ Curses needs codes, not actual symbols keys produce.
+        Moreover, some keys are specified by the name like
+        'space' or 'pgdn'. So we need some processing.
+    """
+
+    if keyname in SPECIAL_KEYS:
+        return SPECIAL_KEYS[keyname]
     else:
-        return(ord(key))
+        return(ord(keyname))
 
 # Let's load settings from config:
 
