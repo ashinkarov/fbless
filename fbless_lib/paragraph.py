@@ -4,13 +4,9 @@ import sys
 import locale
 
 from hyphenation import Hyphenation
-from options import options, replace_chars, center_text, columns
-
-
-#screen_cols = 80
+from options import styles, general
 
 default_charset = locale.getdefaultlocale()[1]
-
 hyph = Hyphenation()
 
 
@@ -86,9 +82,9 @@ class Paragraph:
         if lang is None:
             self.lang = 'ru'
         try:
-            self.__dict__.update(options[type])
+            self.__dict__.update(styles[type])
         except KeyError:
-            self.__dict__.update(options['default'])
+            self.__dict__.update(styles['default'])
         if self.justify == 'fill':
             self.stretch = True
         else:
@@ -135,8 +131,8 @@ class Paragraph:
             self.lines = ['']
             return
 
-        if columns:
-            max_len = columns - self.left_indent - self.right_indent
+        if general['columns']:
+            max_len = general['columns'] - self.left_indent - self.right_indent
         else:
             max_len = self.scr_cols - self.left_indent - self.right_indent
 
@@ -169,7 +165,7 @@ class Paragraph:
             data = self.data[attr_begin:attr_end]
 
             if data:
-                if replace_chars:
+                if general['replace_chars']:
                     data = replace(data)
 
                 if data.startswith(' '):
@@ -247,7 +243,7 @@ class Paragraph:
             else:  # left or fill
                 spaces = ' ' * self.left_indent
 
-            if center_text:
+            if general['center_text']:
                 # to center text, we pad it with spaces from the left
                 padding = self.scr_cols - max_len
                 padding -= self.left_indent + self.right_indent

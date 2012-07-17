@@ -5,6 +5,17 @@ import curses
 import ConfigParser
 import os
 
+try:
+    from xdg.BaseDirectory import xdg_cache_home, xdg_config_home
+except ImportError:
+    xdg_cache_home = os.path.expanduser('~/.cache')
+    xdg_config_home = os.path.expanduser('~/.config')
+
+CONFIG_FILES = [
+        os.path.join(xdg_config_home, "fbless", "fblessrc"),
+        os.path.expanduser("~/.fblessrc"),
+    ]
+
 SPECIAL_KEYS = {
     'left': curses.KEY_LEFT,
     'right': curses.KEY_RIGHT,
@@ -34,68 +45,28 @@ COLORS = {
     'none': None,
 }
 
-
-### Loading configuration
-
-def read_style_settings(config, stylename):
-    """ Read settings for the given style from the given config.
-
-        Try to cast values to the types they have in the options dictionary.
-    """
-    if stylename not in options.keys():
-        return
-
-    if stylename not in config.sections():
-        return
-
-    for (k, v) in options[stylename].items():
-        try:
-            # have to parse bool before int because the latter is implicitly
-            # casted to the former, thus causing attempt to parse bool as int
-            if isinstance(v, bool):
-                options[stylename][k] = config.getboolean(stylename, k)
-            # foreground and background are some integral constants, but in
-            # config they are represented by string values
-            elif isinstance(v, int) and k not in ['foreground', 'background']:
-                options[stylename][k] = config.getint(stylename, k)
-            else:
-                options[stylename][k] = config.get(stylename, k)
-        except ConfigParser.NoOptionError:
-            # It's okay, user simply didn't bother to redefine the option
-            pass
-
-        # TODO: what could go wrong? Can we provide user with meaningful error
-        # messages and not just staketraces?
-
-    # In config, colors are specified with strings, but we need curses
-    # constants. Let's convert 'em all!
-    for style in options.keys():
-        for c in ['foreground', 'background']:
-            if isinstance(options[style][c], str):
-                options[style][c] = COLORS[options[style][c]]
-
 ### Defaults
 
-save_file = '~/.cache/fbless/fbless_save'  # FIXME: need XDG
-context_lines = 0
-status = True
+paths = {
+    'save_file': os.path.join(xdg_cache_home, 'fbless', 'fbless_save'),
+}
 
-# screen width. 0 means autodetect
-columns = 0
-# if True and 'columns' is set, the text would be centered
-center_text = False
+general = {
+    'context_lines': 0,
+    'status': True,
+    # screen width. 0 means autodetect
+    'columns': 0,
+    # if True and 'columns' is set, the text would be centered
+    'center_text': False,
+    # use default terminal colors
+    'use_default_colors': True,
+    'replace_chars': False,
+    'editor': 'vim -c go{byte_offset} "{filename}"',
+    # interval for autoscroll in sec
+    'auto_scroll_interval': 3,
+}
 
-# use default terminal colors
-use_default_colors = True
-
-replace_chars = False
-
-editor = 'vim -c go{byte_offset} "{filename}"'
-
-# interval for autoscroll in sec
-auto_scroll_interval = 3
-
-options = {
+styles = {
     'default': {
         'justify': 'fill',
         'hyphenate': True,
@@ -220,49 +191,56 @@ keys = {
     'goto-end': (curses.KEY_END,),
     'edit-xml': (ord('o'),),
 }
+
+
+def typed_get(config, section, sectiondict, key, value):
+    """ Get config value with given type
+    """
+    if isinstance(sectiondict[section][key], bool):
+        return config.getboolean(section, key)
+    elif (
+            isinstance(sectiondict[section][key], int)
+            and key not in ('foreground', 'background')
+    ):
+        return config.getint(section, key)
+    elif key in ('foreground', 'background'):
+            # foreground and background are some integral constants, but
+            # they're represented with string values in config file
+            # we should make conversion
+            return COLORS[value]
+    elif isinstance(sectiondict[section][key], tuple) and section == 'keys':
+        # curses needs codes, not actual symbols keys produce.
+        # Moreover, some keys are specified by the name like
+        # 'space' or 'pgdn'. So let's do some processing.
+        return tuple(
+            [convert_key(keyname.strip()) for keyname in value.split(',')]
+        )
+    else:
+        return config.get(section, key)
+
+
+def convert_key(key):
+    if key in SPECIAL_KEYS:
+        return SPECIAL_KEYS[key]
+    else:
+        return(ord(key))
+
+# Let's load settings from config:
+
+
 config = ConfigParser.RawConfigParser()
-expand = lambda x: os.path.expanduser(x)
-config.read(map(expand, ["~/.config/fbless/fblessrc", "~/.fblessrc"]))
+config.read(CONFIG_FILES)
 
-for style in options.keys():
-    read_style_settings(config, style)
-
-if 'paths' in config.sections():
-    try:
-        save_file = config.get('paths', 'save_file')
-    except ConfigParser.NoOptionError:
-        pass
-
-if 'general' in config.sections():
-    try:
-        context_lines = config.getint('general', 'context_lines')
-        auto_scroll_interval = config.getint('general', 'auto_scroll_interval')
-        columns = config.getint('general', 'columns')
-
-        status = config.getboolean('general', 'status')
-        center_text = config.getboolean('general', 'center_text')
-        use_default_colors = config.getboolean('general', 'use_default_colors')
-        replace_chars = config.getboolean('general', 'replace_chars')
-
-        editor = config.get('general', 'editor')
-    except ConfigParser.NoOptionError:
-        # User choose not to redefine some value. No problem!
-        pass
-
-if 'keys' in config.sections():
-    try:
-        for key in keys.keys():
-            bindings = config.get('keys', key)
-            # curses needs codes, not actual symbols keys produce.
-            # Moreover, some keys are specified by the name like
-            # 'space' or 'pgdn'. So let's do some processing.
-            processed = []
-
-            for b in bindings.split(','):
-                if b.strip() not in SPECIAL_KEYS.keys():
-                    processed.append(ord(b.strip()))
-                else:
-                    processed.append(SPECIAL_KEYS[b.strip()])
-            keys[key] = processed
-    except ConfigParser.NoOptionError:
-        pass
+for d, section in (
+    [(globals(), section) for section in ['paths', 'general', 'keys']]
+    + [(styles, style) for style in styles]
+):
+    if config.has_section(section):
+        d[section].update([
+            (
+                key,
+                typed_get(config, section, d, key, value),
+            )
+            for (key, value) in config.items(section)
+            if key in d[section]
+        ])

@@ -58,7 +58,7 @@ class MainWindow:
         curses.noecho()
         curses.cbreak()
         curses.start_color()
-        if options.use_default_colors:
+        if options.general['use_default_colors']:
             curses.use_default_colors()
         self.init_color()
         self.init_screen(self.screen)
@@ -89,7 +89,7 @@ class MainWindow:
     def load_positions(self):
         positions = []
         try:
-            d = open(os.path.expanduser(options.save_file)).read()
+            d = open(os.path.expanduser(options.paths['save_file'])).read()
         except:
             pass
         else:
@@ -108,7 +108,7 @@ class MainWindow:
         for l in positions:
             if l[0] != self.filename:
                 save_pos.append(l)
-        save_file = os.path.expanduser(options.save_file)
+        save_file = os.path.expanduser(options.paths['save_file'])
         # it may so happen that user would specify path with non-existent
         # directories in it. In such cases open() would fail. To prevent that,
         # we create all the directories.
@@ -121,30 +121,30 @@ class MainWindow:
 
     def init_color(self):
         n = 1
-        for i in options.options:
-            fg = options.options[i]['foreground']
-            bg = options.options[i]['background']
+        for i in options.styles:
+            fg = options.styles[i]['foreground']
+            bg = options.styles[i]['background']
             if fg is None and bg is None:
-                options.options[i]['color'] = None
+                options.styles[i]['color'] = None
                 continue
             if fg is None:
-                fg = options.options['default']['foreground']
+                fg = options.styles['default']['foreground']
             if bg is None:
-                bg = options.options['default']['background']
+                bg = options.styles['default']['background']
             curses.init_pair(n, fg, bg)
-            options.options[i]['color'] = n
+            options.styles[i]['color'] = n
             n += 1
-        if not options.use_default_colors:
-            n = options.options['default']['color']
+        if not options.general['use_default_colors']:
+            n = options.styles['default']['color']
             self.screen.bkgdset(ord(' '), curses.color_pair(n))
 
     def add_str(self, line, type):
         # add string to current cursor position
 
-        if type in options.options:
-            opt = options.options[type]
+        if type in options.styles:
+            opt = options.styles[type]
         else:
-            opt = options.options['default']
+            opt = options.styles['default']
 
         cur_attr = None
         in_search = False
@@ -152,14 +152,14 @@ class MainWindow:
             if isinstance(s, int):
                 # attribute
                 if s == attr.strong:
-                    cur_attr = options.options['strong']['color']
+                    cur_attr = options.styles['strong']['color']
                 elif s == attr.emphasis:
-                    cur_attr = options.options['emphasis']['color']
+                    cur_attr = options.styles['emphasis']['color']
                 elif s == attr.style:
-                    cur_attr = options.options['style']['color']
+                    cur_attr = options.styles['style']['color']
                 elif s == attr.left_spaces:
                     # leading spaces
-                    cur_attr = s  # options.options['default']['color']
+                    cur_attr = s  # options.styles['default']['color']
                 elif s == attr.search:
                     in_search = True
                     pass
@@ -171,7 +171,7 @@ class MainWindow:
 
             elif isinstance(s, tuple):
                 # link
-                cur_attr = options.options['a']['color']
+                cur_attr = options.styles['a']['color']
                 yx = list(self.screen.getyx())
                 yx.append(s[1])         # add link name (href)
                 self.link_pos.append(yx)
@@ -215,14 +215,15 @@ class MainWindow:
             self.add_str(s, type)
             _par_index, _line_index = self.content.indexes()
             i += 1
-            if i > curses.LINES - options.status - 1:
+            if i > curses.LINES - options.general['status'] - 1:
                 break
             self.screen.move(i, 0)
             _line_index += 1
 
     def toggle_status(self, status):
-        # toggle status
-        #options.status = not options.status
+        """ toggle status
+        """
+        #options.general['status'] = not options.status
         self.update_status = True
         if not status:
             self.screen.move(curses.LINES - 1, 0)
@@ -246,7 +247,7 @@ class MainWindow:
         # Note: this function calling before scrolling
         if not self.link_pos:
             return
-        lines = curses.LINES - options.status
+        lines = curses.LINES - options.general['status']
         links = []
         i = 0
         for link in self.link_pos:
@@ -457,18 +458,18 @@ class MainWindow:
             self.redraw_scr()
             self.c_fifo_scroll_line = 0
 
-        n = curses.LINES - options.status
+        n = curses.LINES - options.general['status']
         try:
             s, type = self.content.get(self.par_index, self.line_index + n)
         except IndexError:
             # EOF
             return
 
-        self.toggle_status(options.status)
+        self.toggle_status(options.general['status'])
         self.update_links_pos(1)
 
         self.screen.scroll(1)
-        self.screen.move(curses.LINES - 1 - options.status, 0)
+        self.screen.move(curses.LINES - 1 - options.general['status'], 0)
         self.screen.clrtoeol()
         self.add_str(s, type)
 
@@ -482,7 +483,7 @@ class MainWindow:
         if self.auto_scroll_type:
             func = getattr(self, self.auto_scroll_type)
             func()
-        signal.alarm(options.auto_scroll_interval)
+        signal.alarm(options.general['auto_scroll_interval'])
 
     def scroll_fifo(self):
         """ FIFO type auto scroll
@@ -491,7 +492,7 @@ class MainWindow:
 
         # set scroll type for auto scroll
         self.auto_scroll_type = const.SCROLL_FIFO
-        n = curses.LINES - options.status
+        n = curses.LINES - options.general['status']
         try:
             s, type = self.content.get(self.par_index, self.line_index + n)
         except IndexError:
@@ -519,7 +520,7 @@ class MainWindow:
         self.screen.move(self.c_fifo_scroll_line, 0)
         self.screen.addch("*")
         # erase next line
-        if self.c_fifo_scroll_line + 1 < curses.LINES - options.status:
+        if self.c_fifo_scroll_line + 1 < curses.LINES - options.general['status']:
             self.screen.move(self.c_fifo_scroll_line + 1, 0)
             self.screen.clrtoeol()
 
@@ -532,7 +533,11 @@ class MainWindow:
     def next_page(self):
         # set scroll type for auto scroll
         self.auto_scroll_type = const.NEXT_PAGE
-        n = curses.LINES - options.context_lines - options.status
+        n = (
+            curses.LINES
+            - options.general['context_lines']
+            - options.general['status']
+        )
         try:
             s, type = self.content.get(self.par_index, self.line_index + n)
         except IndexError:
@@ -542,7 +547,9 @@ class MainWindow:
         self.line_index += n
         self.redraw_scr()
         self.par_index, self.line_index = self.content.indexes(
-            self.par_index, self.line_index)
+            self.par_index,
+            self.line_index,
+        )
 
     def prev_page(self):
         # set scroll type for auto scroll
@@ -550,11 +557,17 @@ class MainWindow:
         if self.par_index == 0 and self.line_index == 0:
             return
         self.update_status = True
-        n = curses.LINES - options.context_lines - options.status
+        n = (
+            curses.LINES
+            - options.general['context_lines']
+            - options.general['status']
+        )
         self.line_index -= n
         self.redraw_scr()
         self.par_index, self.line_index = self.content.indexes(
-            self.par_index, self.line_index)
+            self.par_index,
+            self.line_index
+        )
 
     def goto_home(self):
         if self.par_index == 0 and self.line_index == 0:
@@ -611,7 +624,7 @@ class MainWindow:
         curses.def_prog_mode()  # save current tty modes
         curses.endwin()
         os.system(
-            options.editor.format(
+            options.general['editor'].format(
                 byte_offset=byte_index,
                 filename=self.filename
             )
@@ -630,8 +643,8 @@ class MainWindow:
                 break
 
             elif ch in options.keys['toggle-status']:
-                options.status = not options.status
-                self.toggle_status(options.status)
+                options.general['status'] = not options.status
+                self.toggle_status(options.general['status'])
 
             elif ch in options.keys['goto-percent']:
                 self.goto_percent()
@@ -672,10 +685,10 @@ class MainWindow:
                         "Auto scroll On :"
                         + str(self.auto_scroll_type)
                         + " at "
-                        + str(options.auto_scroll_interval)
+                        + str(options.general['auto_scroll_interval'])
                         + "sec"
                     )
-                    signal.alarm(options.auto_scroll_interval)
+                    signal.alarm(options.general['auto_scroll_interval'])
                     # start alarm timer
                     if not self.auto_scroll_type:
                         self.message = (
@@ -688,21 +701,21 @@ class MainWindow:
                 self.update_status = True
 
             elif ch in options.keys['timer-inc']:
-                options.auto_scroll_interval += 1
+                options.general['auto_scroll_interval'] += 1
                 self.message = (
                     "Interval: "
-                    + str(options.auto_scroll_interval)
+                    + str(options.general['auto_scroll_interval'])
                     + "sec"
                 )
                 self.update_status = True
 
             elif ch in options.keys['timer-dec']:
-                options.auto_scroll_interval -= 1
-                if options.auto_scroll_interval < 1:
-                    options.auto_scroll_interval = 1
+                options.general['auto_scroll_interval'] -= 1
+                if options.general['auto_scroll_interval'] < 1:
+                    options.general['auto_scroll_interval'] = 1
                 self.message = (
                     "Interval: "
-                    + str(options.auto_scroll_interval)
+                    + str(options.general['auto_scroll_interval'])
                     + "sec"
                 )
                 self.update_status = True
@@ -739,7 +752,7 @@ class MainWindow:
                 self.toggle_status(True)  # in case if links has been removed
                 self.message = ''
 
-            elif options.status:
+            elif options.general['status']:
                 _time = time.strftime(' %H:%M ')
                 if _time != cur_time:
                     self.update_status = True
@@ -749,11 +762,11 @@ class MainWindow:
                 if self.message_timeout <= 0:
                     self.message_timeout = 0
                     self.update_status = True
-                    self.toggle_status(options.status)  # restore status
+                    self.toggle_status(options.general['status'])  # restore status
 
             if self.update_status and self.message_timeout <= 0:
 
-                if options.status:
+                if options.general['status']:
                     self.draw_status(_time)
 
                 if self.link_pos:
@@ -761,7 +774,7 @@ class MainWindow:
                     pos = self.link_pos[self.cur_link]
                     self.screen.move(*pos[:2])
 
-                elif not options.status:
+                elif not options.general['status']:
                     # move cursor to bottom-right corner
                     self.screen.move(curses.LINES - 1, curses.COLS - 1)
 
@@ -888,7 +901,11 @@ class Content:
         for par in self._content:
             n += len(par.data)
             if float(n) / total > percent:
-                t = curses.LINES - options.context_lines - options.status
+                t = (
+                    curses.LINES
+                    - options.general['context_lines']
+                    - options.general['status']
+                )
                 par_index, line_index = self.indexes(i, -t)  # back one screen
                 return par_index, line_index
             i += 1
