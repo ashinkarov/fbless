@@ -643,7 +643,7 @@ class MainWindow:
                 break
 
             elif ch in options.keys['toggle-status']:
-                options.general['status'] = not options.status
+                options.general['status'] = not options.general['status']
                 self.toggle_status(options.general['status'])
 
             elif ch in options.keys['goto-percent']:
