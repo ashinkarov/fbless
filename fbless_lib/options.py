@@ -38,14 +38,12 @@ def typed_get(config, section, sectiondict, key, value):
         # foreground and background are some integral constants, but
         # they're represented with string values in config file
         # we should make conversion
-        try:
-            return COLORS[value]
-        except KeyError:
+        if value in COLORS:
+            return value
+        else:
             return config.getint(section, key)
-    elif isinstance(sectiondict[section][key], tuple) and section == 'keys':
-        return tuple(
-            [keyname.strip() for keyname in value.split(',')]
-        )
+    elif section == 'keys':
+        return tuple([keyname.strip() for keyname in value.split(',')])
     else:
         return config.get(section, key)
 
