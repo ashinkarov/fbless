@@ -2,7 +2,6 @@
 """ Default options """
 
 import os
-import curses
 
 try:
     from xdg.BaseDirectory import xdg_cache_home
@@ -36,8 +35,8 @@ styles = {
         'right_indent': 2,
         'first_line_indent': 4,
         'bold': False,
-        'foreground': curses.COLOR_WHITE,
-        'background': curses.COLOR_BLACK,
+        'foreground': 'white',
+        'background': 'black',
     },
     'p': {
         'justify': 'fill',
@@ -46,8 +45,8 @@ styles = {
         'right_indent': 2,
         'first_line_indent': 4,
         'bold': False,
-        'foreground': None,
-        'background': None,
+        'foreground': 'none',
+        'background': 'none',
     },
     'v': {
         'justify': 'fill',
@@ -55,8 +54,8 @@ styles = {
         'left_indent': 10,
         'right_indent': 4,
         'first_line_indent': 0,
-        'foreground': None,
-        'background': None,
+        'foreground': 'none',
+        'background': 'none',
     },
     'text-author': {
         'justify': 'right',
@@ -64,8 +63,8 @@ styles = {
         'left_indent': 20,
         'right_indent': 2,
         'first_line_indent': 0,
-        'foreground': curses.COLOR_YELLOW,
-        'background': None,
+        'foreground': 'yellow',
+        'background': 'none',
     },
     'epigraph': {
         'justify': 'fill',
@@ -73,8 +72,8 @@ styles = {
         'left_indent': 20,
         'right_indent': 2,
         'first_line_indent': 4,
-        'foreground': None,
-        'background': None,
+        'foreground': 'none',
+        'background': 'none',
     },
     'cite': {
         'justify': 'fill',
@@ -82,8 +81,8 @@ styles = {
         'left_indent': 8,
         'right_indent': 8,
         'first_line_indent': 8,
-        'foreground': None,
-        'background': None,
+        'foreground': 'none',
+        'background': 'none',
     },
     'title': {
         'justify': 'center',
@@ -92,8 +91,8 @@ styles = {
         'right_indent': 8,
         'first_line_indent': 0,
         'bold': True,
-        'foreground': curses.COLOR_MAGENTA,
-        'background': None,
+        'foreground': 'magenta',
+        'background': 'none',
     },
     'subtitle': {
         'justify': 'center',
@@ -101,8 +100,8 @@ styles = {
         'left_indent': 8,
         'right_indent': 8,
         'first_line_indent': 0,
-        'foreground': curses.COLOR_CYAN,
-        'background': None,
+        'foreground': 'cyan',
+        'background': 'none',
     },
     'image': {
         'justify': 'center',
@@ -110,47 +109,47 @@ styles = {
         'left_indent': 0,
         'right_indent': 0,
         'first_line_indent': 0,
-        'foreground': None,
-        'background': None,
+        'foreground': 'none',
+        'background': 'none',
     },
     'strong': {
-        'foreground': curses.COLOR_MAGENTA,
-        'background': None,
+        'foreground': 'magenta',
+        'background': 'none',
     },
     'emphasis': {
-        'foreground': curses.COLOR_CYAN,
-        'background': None,
+        'foreground': 'cyan',
+        'background': 'none',
     },
     'style': {
-        'foreground': curses.COLOR_GREEN,
-        'background': None,
+        'foreground': 'green',
+        'background': 'none',
     },
     'a': {
-        'foreground': curses.COLOR_RED,
-        'background': None,
+        'foreground': 'red',
+        'background': 'none',
     },
 }
 
 keys = {
-    'quit': (ord('q'), ord('Q')),
-    'toggle-status': (ord('s'),),
-    'search': (ord('/'),),
-    'scroll-fifo': (ord('f'),),
-    'auto-scroll': (ord('a'),),
-    'search-next': (ord('n'),),
-    'timer-inc': (ord('+'),),
-    'timer-dec': (ord('-'),),
-    'goto-percent': (ord('5'), ord('G')),
-    'jump-link': (ord('\t'),),
-    'goto-link': (curses.KEY_ENTER, ord('\n'), curses.KEY_RIGHT),
-    'backward': (curses.KEY_LEFT, ord('h')),
-    'forward': (curses.KEY_BACKSPACE, ord('l'),),
-    'scroll-up': (curses.KEY_UP, ord('k')),
-    'scroll-down': (curses.KEY_DOWN, ord('j')),
-    'next-page': (ord(' '), curses.KEY_NPAGE),
-    'prev-page': (curses.KEY_PPAGE,),
-    'goto-home': (ord('g'), curses.KEY_HOME,),
-    'goto-end': (curses.KEY_END,),
-    'edit-xml': (ord('o'),),
+    'quit': ('q', 'Q',),
+    'toggle-status': ('s',),
+    'search': ('/',),
+    'scroll-fifo': ('f',),
+    'auto-scroll': ('a',),
+    'search-next': ('n',),
+    'timer-inc': ('+',),
+    'timer-dec': ('-',),
+    'goto-percent': ('5', 'G',),
+    'jump-link': ('\t',),
+    'goto-link': ('return', '\n', 'right',),
+    'backward': ('left', 'h',),
+    'forward': ('backspace', 'l',),
+    'scroll-up': ('up', 'k',),
+    'scroll-down': ('down', 'j',),
+    'next-page': (' ', 'pgdn',),
+    'prev-page': ('pgup',),
+    'goto-home': ('g', 'home',),
+    'goto-end': ('end',),
+    'edit-xml': ('o',),
 }
 

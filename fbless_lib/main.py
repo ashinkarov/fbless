@@ -17,6 +17,7 @@ from fb2parser import fb2parse
 from paragraph import attr
 import options
 import const
+from options import convert_color, get_keys
 
 default_charset = locale.getdefaultlocale()[1]
 
@@ -122,15 +123,15 @@ class MainWindow:
     def init_color(self):
         n = 1
         for i in options.styles:
-            fg = options.styles[i]['foreground']
-            bg = options.styles[i]['background']
+            fg = convert_color(options.styles[i]['foreground'])
+            bg = convert_color(options.styles[i]['background'])
             if fg is None and bg is None:
                 options.styles[i]['color'] = None
                 continue
             if fg is None:
-                fg = options.styles['default']['foreground']
+                fg = convert_color(options.styles['default']['foreground'])
             if bg is None:
-                bg = options.styles['default']['background']
+                bg = convert_color(options.styles['default']['background'])
             curses.init_pair(n, fg, bg)
             options.styles[i]['color'] = n
             n += 1
@@ -639,44 +640,44 @@ class MainWindow:
             ch = self.screen.getch()
             #ch = curses.wgetch()
 
-            if ch in options.keys['quit']:
+            if ch in get_keys('quit'):
                 break
 
-            elif ch in options.keys['toggle-status']:
+            elif ch in get_keys('toggle-status'):
                 options.general['status'] = not options.general['status']
                 self.toggle_status(options.general['status'])
 
-            elif ch in options.keys['goto-percent']:
+            elif ch in get_keys('goto-percent'):
                 self.goto_percent()
 
-            elif ch in options.keys['search']:
+            elif ch in get_keys('search'):
                 self.search()
 
-            elif ch in options.keys['search-next']:
+            elif ch in get_keys('search-next'):
                 self.search_next()
 
-            elif ch in options.keys['jump-link']:
+            elif ch in get_keys('jump-link'):
                 self.jump_link()
 
-            elif ch in options.keys['goto-link']:
+            elif ch in get_keys('goto-link'):
                 self.goto_link()
 
-            elif ch in options.keys['backward']:
+            elif ch in get_keys('backward'):
                 self.goto_backward()
 
-            elif ch in options.keys['forward']:
+            elif ch in get_keys('forward'):
                 self.goto_forward()
 
-            elif ch in options.keys['scroll-up']:
+            elif ch in get_keys('scroll-up'):
                 self.scroll_up()
 
-            elif ch in options.keys['scroll-down']:
+            elif ch in get_keys('scroll-down'):
                 self.scroll_down()
 
-            elif ch in options.keys['scroll-fifo']:
+            elif ch in get_keys('scroll-fifo'):
                 self.scroll_fifo()
 
-            elif ch in options.keys['auto-scroll']:
+            elif ch in get_keys('auto-scroll'):
                 # start / stop
                 self.auto_scroll_enable = not self.auto_scroll_enable
                 # switch auto scroll mode
@@ -700,7 +701,7 @@ class MainWindow:
                     signal.alarm(0)  # turn off timer
                 self.update_status = True
 
-            elif ch in options.keys['timer-inc']:
+            elif ch in get_keys('timer-inc'):
                 options.general['auto_scroll_interval'] += 1
                 self.message = (
                     "Interval: "
@@ -709,7 +710,7 @@ class MainWindow:
                 )
                 self.update_status = True
 
-            elif ch in options.keys['timer-dec']:
+            elif ch in get_keys('timer-dec'):
                 options.general['auto_scroll_interval'] -= 1
                 if options.general['auto_scroll_interval'] < 1:
                     options.general['auto_scroll_interval'] = 1
@@ -720,19 +721,19 @@ class MainWindow:
                 )
                 self.update_status = True
 
-            elif ch in options.keys['next-page']:
+            elif ch in get_keys('next-page'):
                 self.next_page()
 
-            elif ch in options.keys['prev-page']:
+            elif ch in get_keys('prev-page'):
                 self.prev_page()
 
-            elif ch in options.keys['goto-home']:
+            elif ch in get_keys('goto-home'):
                 self.goto_home()
 
-            elif ch in options.keys['goto-end']:
+            elif ch in get_keys('goto-end'):
                 self.goto_end()
 
-            elif ch in options.keys['edit-xml']:
+            elif ch in get_keys('edit-xml'):
                 self.edit_xml()
 
 ##             elif ch in (curses.KEY_MOUSE,):
