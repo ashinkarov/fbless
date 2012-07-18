@@ -21,7 +21,7 @@ setup(
     name='fbless',
     version=program_version,
     url='https://github.com/matimatik/fbless',
-    download_url='https://github.com/matimatik/fbless/downloads'
+    download_url='https://github.com/matimatik/fbless/downloads',
     author='Con Radchenko',
     author_email='pybookreader@narod.ru',
     maintainer='Ivan Burbakov',
