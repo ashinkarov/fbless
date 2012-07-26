@@ -179,6 +179,14 @@ class MainWindow:
                 fg = convert_color(options.styles['default']['foreground'])
             if bg is None:
                 bg = convert_color(options.styles['default']['background'])
+            
+            # If config file misses a definition for the 'background'
+            # or 'foreground', consider using default environment 
+            # colors.  Curses allows passing -1 constant which means
+            # default value.  
+            # FIXME: One might put -1 into `const.py' and name it.
+            fg = -1 if fg is None else fg
+            bg = -1 if bg is None else bg
             curses.init_pair(n, fg, bg)
             options.styles[i]['color'] = n
             n += 1
