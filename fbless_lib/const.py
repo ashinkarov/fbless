@@ -2,6 +2,8 @@
 #
 import curses
 
+VERSION = '0.2.2'
+
 # constant for auto scroll
 NO_SCROLL = None
 SCROLL_FIFO = "scroll_fifo"

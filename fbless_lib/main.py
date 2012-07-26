@@ -12,6 +12,7 @@ from cStringIO import StringIO
 import time
 import curses
 import curses.ascii as ascii
+import argparse
 
 from fb2parser import fb2parse
 from paragraph import attr
@@ -25,15 +26,44 @@ default_charset = locale.getdefaultlocale()[1]
 class MainWindow:
 
     def __init__(self):
+        self.back_history = []
+        self.fore_history = []
+
+        self.message = ''
+        self.message_timeout = 0
+        
+        self.auto_scroll_type = None  # auto scroll type not selected.
+        # TODO: load status from rc_file
+        self.auto_scroll_enable = False  # disable auto scroll at startup
+        signal.signal(signal.SIGALRM, self.alarm_handler)
+        # alarm as timer for auto scroll
+        self.c_fifo_scroll_line = 0  # counter for fifo auto scroll
 
         self.filename = None
-        if len(sys.argv) > 1:
-            self.filename = os.path.abspath(sys.argv[1])
+
+        parser = argparse.ArgumentParser(description = 'fb2 console reader', version = const.VERSION)
+        parser.add_argument('file', nargs = '?',
+                            help = 'fb2, zip, gzip or bzip2 file')
+        parser.add_argument('-a', '--autoscroll', action = 'store_true',
+                            help = 'enable auto-scroll')
+        parser.add_argument('-t', '--scroll_type', choices = ['down', 'up', 
+                            'page-down', 'page-up', 'fifo'],
+                            help = 'auto-scroll type (down, up, page-down, page-up, fifo)')
+        parser.add_argument('-i', '--interval', type = int, metavar = 'sec.',
+                            help = 'auto-scroll time interval')
+        parser.add_argument('-g', '--goto', type = int, metavar = '%',
+                            help = 'go to the offset (in percent)')
+        parser.add_argument('-e', '--edit', action = 'store_true',
+                            help = 'open in the editor')
+        args = parser.parse_args()
+
+        if args.file:
+            self.filename = os.path.abspath(args.file)
         self.par_index = 0
         self.line_index = 0
         positions = self.load_positions()
         if self.filename is None and not positions:
-            sys.exit('missing filename')
+            sys.exit('Error: Missing filename')
         if self.filename is None:
             # load last file
             l = positions[0]
@@ -48,12 +78,27 @@ class MainWindow:
                     break
         self.basename = os.path.basename(self.filename)
 
-        self.back_history = []
-        self.fore_history = []
+        if args.scroll_type:
+            if args.scroll_type == 'down':
+                self.auto_scroll_type = const.SCROLL_DOWN
+            elif args.scroll_type == 'up':
+                self.auto_scroll_type = const.SCROLL_UP
+            elif args.scroll_type == 'page-down':
+                self.auto_scroll_type = const.NEXT_PAGE
+            elif args.scroll_type == 'page-up':
+                self.auto_scroll_type = const.PREV_PAGE
+            elif args.scroll_type == 'fifo':
+                self.auto_scroll_type = const.SCROLL_FIFO
 
-        self.message = ''
-        self.message_timeout = 0
+        if args.interval:
+            self.auto_scroll_interval = args.interval
+        else:
+            self.auto_scroll_interval = options.general['auto_scroll_interval']
 
+        if args.autoscroll:
+            self.auto_scroll_enable = True
+            signal.alarm(self.auto_scroll_interval)
+ 
         signal.signal(signal.SIGWINCH, self.resize_window)
         self.screen = curses.initscr()
         curses.noecho()
@@ -66,20 +111,22 @@ class MainWindow:
 
         #~curses.mousemask(curses.ALL_MOUSE_EVENTS)
 
-        self.auto_scroll_type = None  # auto scroll type not selected.
-        # TODO: load status from rc_file
-        self.auto_scroll_enable = False  # disable auto scroll at startup
-        signal.signal(signal.SIGALRM, self.alarm_handler)
-        # alarm as timer for auto scroll
-        self.c_fifo_scroll_line = 0  # counter for fifo auto scroll
-
         self.link_pos = []
         # for <a> elements; list of tuples (y, x, link_name)
         self.cur_link = 0  # current cursor position; index of link_pos
         self.content = create_content(self.filename, curses.COLS)
-        self.update_status = True
 
+        if args.goto:
+            if args.goto < 1 or args.goto > 100:
+                sys.exit('Error: Percent of the value must be between 1 and 100')
+            self.par_index, self.line_index = self.content.get_position(args.goto)
+            self.screen.nodelay(1)
+
+        self.update_status = True
         self.redraw_scr()
+
+        if args.edit:
+            self.edit_xml()
 
     def init_screen(self, screen):
         screen.keypad(1)
@@ -484,7 +531,7 @@ class MainWindow:
         if self.auto_scroll_type:
             func = getattr(self, self.auto_scroll_type)
             func()
-        signal.alarm(options.general['auto_scroll_interval'])
+        signal.alarm(self.auto_scroll_interval)
 
     def scroll_fifo(self):
         """ FIFO type auto scroll
@@ -686,10 +733,10 @@ class MainWindow:
                         "Auto scroll On :"
                         + str(self.auto_scroll_type)
                         + " at "
-                        + str(options.general['auto_scroll_interval'])
+                        + str(self.auto_scroll_interval)
                         + "sec"
                     )
-                    signal.alarm(options.general['auto_scroll_interval'])
+                    signal.alarm(self.auto_scroll_interval)
                     # start alarm timer
                     if not self.auto_scroll_type:
                         self.message = (
@@ -702,21 +749,21 @@ class MainWindow:
                 self.update_status = True
 
             elif ch in get_keys('timer-inc'):
-                options.general['auto_scroll_interval'] += 1
+                self.auto_scroll_interval += 1
                 self.message = (
                     "Interval: "
-                    + str(options.general['auto_scroll_interval'])
+                    + str(self.auto_scroll_interval)
                     + "sec"
                 )
                 self.update_status = True
 
             elif ch in get_keys('timer-dec'):
-                options.general['auto_scroll_interval'] -= 1
-                if options.general['auto_scroll_interval'] < 1:
-                    options.general['auto_scroll_interval'] = 1
+                self.auto_scroll_interval -= 1
+                if self.auto_scroll_interval < 1:
+                    self.auto_scroll_interval = 1
                 self.message = (
                     "Interval: "
-                    + str(options.general['auto_scroll_interval'])
+                    + str(self.auto_scroll_interval)
                     + "sec"
                 )
                 self.update_status = True
