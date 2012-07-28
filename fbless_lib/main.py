@@ -334,28 +334,93 @@ class MainWindow:
 
         self.link_pos = links
 
-    def get_str(self, validator):
-        #curses.echo()
-        #self.screen.nodelay(0)
-        s = ''
+    def get_utf8_string (self):
+        # This method replaces curses getstr in case of utf8
+        # encoding.  The problem with original getstr is that
+        # it treats multi-byte utf8 character as {2-6} bytes,
+        # which leads to the wrong behaviour when handling
+        # backspace key.  Backspace key deletes exactly one
+        # byte, so user has to press the key 2-6 times.
+        # 
+        # In this method we analyze if a character starts 
+        # a multi-byte, and read the correct number of bytes
+        # for the symbol.  We adjust backspace to delete the
+        # last utf8 character we read.  We reject any ascii
+        # service symbol like ESC, F1, etc, by applying 
+        # ascii.isprint.
+        
+        # FIXME: Is it a valid check for utf-8 encoding?
+        assert default_charset == 'UTF-8'
+        
+        ss = []
         while True:
-            ch = self.screen.getch()
-            if ch in (curses.KEY_ENTER, ascii.NL):
+            c = self.screen.getch ()
+            
+            # Skip any service symbol, like F1, KEY_UP, etc
+            if (c > 0xff):
+                continue
+
+            # In utf8 every multi-byte symbol starts with a byte
+            # that encodes the number of symbols. Here is a table:
+            #    Bytes     Max value    First byte (binary)
+            #      1         0x7f         0xxxxxxx
+            #      2         0x7ff        110xxxxx
+            #      3         0xffff       1110xxxx
+            #      4         0x1fffff     11110xxx
+            #      5         0x3ffffff    111110xx
+            #      6         0x7fffffff   1111110x
+            # 
+            # So in essence, the first position of '0' bit if 
+            # counting from the left hand side is a number of 
+            # bytes in a utf8 multi-char.
+            byte_count = 0
+            for i in xrange (8):
+                if not bool (c & (1 << (7 - i))):
+                    byte_count = i;
+                    break;
+
+            # Now when we know a number of bytes, we have to call
+            # getch() byte_count - 1 times, in order to read the
+            # whole character.
+            if byte_count > 6 or byte_count == 1:
+                raise Exception ("invalid utf8 leading character")
+
+            c = [c]
+            if byte_count >= 2:
+                for i in xrange (byte_count - 1):
+                    c.append (self.screen.getch ())
+            
+            # Create a string from the list of bytes.
+            cc = "".join ([chr (x) for x in  c])
+
+            # String is done, if user hit ENTER.
+            if cc == chr (ascii.NL):
                 break
-            #elif ch in (curses.KEY_ENTER, ord('\n')):
-            #    return ''
-            elif ch in (curses.KEY_BACKSPACE, curses.KEY_LEFT,
-                        ascii.DEL, ascii.BS):
-                if not s:
-                    break
-                y, x = curses.getsyx()
-                self.screen.move(y, x - 1)
-                self.screen.delch()
-                s = s[:-1]
-            elif validator(ch):
-                self.screen.addstr(chr(ch))
-                s += chr(ch)
-        return s
+            
+            # In case of backspace, delete the last character
+            # or continue if input is empty.
+            if cc in (chr (ascii.DEL), chr (ascii.BS)):
+                if len (ss) == 0:
+                    continue
+                ss.pop () 
+                y, x = curses.getsyx ()
+                self.screen.move (y, x - 1)
+                self.screen.delch ()
+                continue
+
+            # Do not save character, if it is something
+            # non-printable, like ESC or similar.
+            if len (cc) == 1 and not ascii.isprint (ord (cc)):
+                continue 
+            
+            # Append symbol to the list of symbols and put
+            # it on the screen.
+            ss.append (cc)
+            self.screen.addstr (cc)
+
+        # Combine characters from list `ss' into a string
+        return "".join (ss)
+
 
     def search(self):
         search_msg = 'Search pattern: '
@@ -365,15 +430,18 @@ class MainWindow:
         self.screen.addstr(search_msg)
         self.screen.nodelay(0)
 
-        curses.echo()
-        s = self.screen.getstr()
-        curses.noecho()
+        if default_charset == 'UTF-8':
+            s = self.get_utf8_string()
+        else:
+            curses.echo()
+            s = self.screen.getstr()
+            curses.noecho()
 
-        # Ignore the erors happening when deleating the
-        # utf8 charactes.
+        # Ignore the errors happening when deleting the
+        # multi-byte characters.
         s = unicode(s, default_charset, errors='ignore')
         self.screen.nodelay(1)
-        #print 'search:', s.encode(default_charset)
+        
         if not s:
             return
         found = self.content.search(s, self.par_index, self.line_index)
@@ -406,13 +474,16 @@ class MainWindow:
         self.screen.clrtoeol()
         self.screen.addstr('Go(%): ')
         self.screen.nodelay(0)
+        
+        if default_charset == 'UTF-8':
+            s = self.get_utf8_string()
+        else:
+            curses.echo()
+            s = self.screen.getstr()
+            curses.noecho()
 
-        curses.echo()
-        s = self.screen.getstr()
-        curses.noecho()
-
-        # Ignore the erors happening when deleating the
-        # utf8 charactes.
+        # Ignore the errors happening when deleting the
+        # multi-byte characters.
         s = unicode(s, default_charset, errors='ignore')
         s = s.encode(default_charset)
         self.update_status = True
