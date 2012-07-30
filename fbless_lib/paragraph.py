@@ -100,6 +100,11 @@ class Paragraph:
         len_words = len([i for i in words if i == ' ']) + 1
         sum_words = sum(len(i) for i in words
                         if not isinstance(i, (int, tuple)))
+
+        # Avoid failing on division by zero.
+        if len_words == 1:
+            return words 
+
         min_space, long_space_num = divmod(max_len - sum_words, len_words - 1)
         short_space_num = len_words - long_space_num - 1
         bres = short_space_num / 2

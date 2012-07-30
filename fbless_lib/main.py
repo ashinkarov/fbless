@@ -356,8 +356,13 @@ class MainWindow:
         while True:
             c = self.screen.getch ()
             
-            # Skip any service symbol, like F1, KEY_UP, etc
-            if (c > 0xff):
+            # xterm passes backspace hit as curses.KEY_BACKSPACE,
+            # other terminals pass it as ascii.BS or ascii.DEL.
+            # So here we unify backspace to ascii.BS and 
+            # Skip any other service symbol, like F1, KEY_UP, etc
+            if c == curses.KEY_BACKSPACE:
+                c = ascii.BS
+            elif c > 0xff:
                 continue
 
             # In utf8 every multi-byte symbol starts with a byte
