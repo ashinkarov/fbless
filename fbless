@@ -7,7 +7,10 @@ import sys
 import locale
 from cStringIO import StringIO
 import curses
+from fbless_lib.options import parse_arguments
 from fbless_lib.main import MainWindow
+
+parse_arguments()
 
 stdout = sys.stdout
 sys.stdout = StringIO()
